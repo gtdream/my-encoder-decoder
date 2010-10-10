@@ -16,7 +16,7 @@ public class EncoderMain {
 			return;
 		}
 
-		URL filePath = EncoderMain.class.getResource("utf-8bom_hangle.txt");
+		URL filePath = EncoderMain.class.getResource("utf-8bom_hanja.txt");
 
 		if (null == filePath) {
 			System.out.println("not exist " + "\"" + args[0] + "\"");
