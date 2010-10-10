@@ -28,7 +28,7 @@ public class EncoderMain {
 			encoder = EncoderFactory.getEncodingMethod(new File(filePath.getPath()));
 			System.out.println(encoder.getEncodingType());
 			String translatedText = encoder.encode();
-//			System.out.print(translatedText);
+			System.out.print(translatedText);
 		} catch (EncoderNotSupportedException ense) {
 			ense.printStackTrace();
 		} catch (IOException ie) {
