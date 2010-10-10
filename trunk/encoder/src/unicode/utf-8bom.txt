@@ -246,7 +246,7 @@ Improving Collation Performance
 문자열들이 많은 list를 정렬하는 것은 시간낭비가 심하다.
 정렬 알고리즘이 반복적으로 문자열들을 비교한다면 CollationKey class를 사용해서 처리속도를 향상시킬 수 있다.
 CollationKey oject는 String과 Collator를 얻기 위한 sort key를 표현한다. 두개의 CollationKey object를 비교하는 것은 sort keys의 bit비교를 수행하는데 Collator.compare method보다 비교가 더 빠르다.
-하지만 CollationKey object를 생성는 것은 시간이 요구된다.
+하지만 CollationKey object를 생성하는 것은 시간이 요구된다.
 한 문자열이 단지 한번 비교되었다면 Collator.compare가 더 나은 성능을 제공한다.
 
 Detecting Text Boundaries
