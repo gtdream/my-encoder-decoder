@@ -1,27 +1,31 @@
 package unicode;
 
-import java.net.URL;
+import java.io.BufferedInputStream;
+import java.io.IOException;
 
-public class Encoder {
 
-	public static void main (String[] args) {
-		// Utilities.printSystemInfo();
-		if (args.length < 1) {
-			System.out.println("not enough arguments");
-			return;
-		}
-
-		URL filePath = Encoder.class.getResource("utf-8.txt");
-
-		if (null == filePath) {
-			System.out.println("not exist " + "\"" + args[0] + "\"");
-			System.exit(0);
-		}
-
-		UTF8 utf8 = new UTF8();
-
-		String translatedText = utf8.encode(filePath.getPath());
-		// System.out.print(translatedText);
+public abstract class Encoder {
+	
+	protected BufferedInputStream bInputStream;
+	private final EncodingType encodingType;
+	
+	public abstract String encode() throws IOException;
+	
+	public Encoder (EncodingType encodingType) {
+		this.encodingType = encodingType;
 	}
-
+	
+	public EncodingType getEncodingType() {
+		return this.encodingType;
+	}
+	
+	public void close() {
+		if (bInputStream != null) {
+			try {
+				this.bInputStream.close();
+			} catch (IOException ie) {
+				ie.printStackTrace();
+			}
+		}
+	}
 }
