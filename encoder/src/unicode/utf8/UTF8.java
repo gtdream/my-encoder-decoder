@@ -1,19 +1,28 @@
 package unicode.utf8;
 
 import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 
-import unicode.Transformer;
 import unicode.TransformationType;
+import unicode.Transformer;
 
 public class UTF8 extends Transformer{
-
-	private final static int BUFFER_SIZE = 8192;
+	
+	BufferedOutputStream bOutputStream;
 	
 	public UTF8 (BufferedInputStream bInputStream, TransformationType encodingType) {
 		
 		super(encodingType);
 		this.bInputStream = bInputStream;
+		
+		try {
+			bOutputStream = new BufferedOutputStream(new FileOutputStream("asd.txt"));
+			
+		} catch (IOException e) {
+			
+		}
 		
 	}
 	
@@ -22,24 +31,59 @@ public class UTF8 extends Transformer{
 		super(TransformationType.UTF8);
 		this.bInputStream = bInputStream;
 		
+		try {
+			bOutputStream = new BufferedOutputStream(new FileOutputStream("asd.txt"));
+			bOutputStream.flush();
+		} catch (IOException e) {
+			
+		}
+		
 	}
 	 
+	@Override
+	public String encode() throws IOException {
+		
+		StringBuilder utf8Text = new StringBuilder();
+		
+
+		
+		return utf8Text.toString();
+		
+	}
+	
+	private void write (int c) {
+		try {
+			
+			byte[] cb = null;
+			if (c > 0x10000)
+				cb = new byte[4];
+			else
+				cb = new byte[2];
+			
+			for (int i = 0; i < cb.length; i++) {
+				cb[i] = (byte) ((c >> 8 * i) & 0xff);
+			}
+			bOutputStream.write(cb);
+			bOutputStream.flush();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
 
 	@Override
 	public String decode () throws IOException {
-		StringBuilder utf8Text = new StringBuilder(BUFFER_SIZE);
+		
+		StringBuilder unicodeText = new StringBuilder();
 
 		// BufferedInputStream의 내부 buffer 와 같은 크기로 맞춤
-		byte[] buffer = new byte[BUFFER_SIZE];
+		byte[] buffer = new byte[bufferSize];
 		
 		int beforeShortageBytes = 0;
 		int incompletionData = 0;
 		
-//		BufferedInputStream bis = new BufferedInputStream(System.in);
-		
 		while (true) {
 			
-			int numberReadedBytes = this.bInputStream.read(buffer, 0, BUFFER_SIZE);
+			int numberReadedBytes = this.bInputStream.read(buffer, 0, bufferSize);
 			
 			if (-1 == numberReadedBytes) {
 				break;
@@ -93,18 +137,14 @@ public class UTF8 extends Transformer{
 			}
 			
 			// 바로 출력
-			System.out.print(part);
+//			System.out.print(part);
 			
 			// 한번에 출력하기위해 모음
 //			utf8Text.append(part);
 			
-//			bis.read();
-			
 		}
-
-//		bis.close();
-		
-		return utf8Text.toString();
+		bOutputStream.close();
+		return unicodeText.toString();
 	}
 
 	/*
@@ -245,9 +285,10 @@ public class UTF8 extends Transformer{
 	 * 처리한 byte 수를 count 저장
 	 * count 가 buffer 의 마지막 index 보다 커지면 종료
 	 */
+	
 	private String translateUTF8 (byte[] buffer, int endIndex, int incompletionData, int numberShortageBytes) {
 		
-		StringBuilder text = new StringBuilder(BUFFER_SIZE);
+		StringBuilder text = new StringBuilder();
 		int count = 0;
 		int character = 0;
 
@@ -336,6 +377,8 @@ public class UTF8 extends Transformer{
 			
 			// char 의 범위로는 BMP범위 문자까지만 표현가능
 			// SMP, SIP 를 사용하기 위해서 integer 로 index 를 직접 넣어줌
+			write(character);
+//			System.out.print((char)character);
 			text.appendCodePoint(character);
 			count++;
 			

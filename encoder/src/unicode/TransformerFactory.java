@@ -22,7 +22,7 @@ public class TransformerFactory {
 	public final static int UTF32LE 	= 0xFFFE0000;
 	public final static int UTF32BE 	= 0x0000FEFF;
 	
-	public static Transformer getEncodingMethod(File file) throws IOException, EncoderNotSupportedException {
+	public static Transformer getTransformer(File file) throws IOException, EncoderNotSupportedException {
 
 		BufferedInputStream bInputStream = null;
 		bInputStream = new BufferedInputStream(new FileInputStream(file));

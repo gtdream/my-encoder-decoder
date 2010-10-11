@@ -3,8 +3,8 @@ package unicode.utf16;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 
-import unicode.Transformer;
 import unicode.TransformationType;
+import unicode.Transformer;
 
 public class UTF16BE extends Transformer{
 	
@@ -13,6 +13,17 @@ public class UTF16BE extends Transformer{
 		this.bInputStream = bInputStream;
 	}
 
+	@Override
+	public String encode() throws IOException {
+		
+		StringBuilder utf8Text = new StringBuilder();
+		
+		
+		
+		return utf8Text.toString();
+		
+	}
+	
 	@Override
 	public String decode() throws IOException {
 		StringBuilder utf16Text = new StringBuilder();
