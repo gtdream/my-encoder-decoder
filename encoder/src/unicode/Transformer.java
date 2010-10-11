@@ -4,20 +4,20 @@ import java.io.BufferedInputStream;
 import java.io.IOException;
 
 
-public abstract class Encoder {
+public abstract class Transformer {
 	
 	protected BufferedInputStream bInputStream;
-	private final EncodingType encodingType;
+	private final TransformationType encodingType;
 	
-	public abstract String encode() throws IOException;
-	
-	public Encoder (EncodingType encodingType) {
+	public Transformer (TransformationType encodingType) {
 		this.encodingType = encodingType;
 	}
 	
-	public EncodingType getEncodingType() {
+	public TransformationType getEncodingType() {
 		return this.encodingType;
 	}
+	
+	public abstract String decode() throws IOException;
 	
 	public void close() {
 		if (bInputStream != null) {

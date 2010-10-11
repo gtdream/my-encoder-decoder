@@ -1,8 +1,6 @@
 package unicode;
 
-public enum EncodingType {
-	UTF32LE,
-	UTF32BE,
+public enum TransformationType {
 	UTF8BOM,
 	UTF8,
 	UTF16LE,

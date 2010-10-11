@@ -7,19 +7,19 @@ import java.net.URL;
 import unicode.exception.EncoderNotSupportedException;
 
 
-public class EncoderMain {
+public class TransformerMain {
 
 	public static void main (String[] args) {
 		
-		if (args.length < 1) {
-			
-			System.out.println("not enough arguments");
-			
-			return;
-			
-		}
+//		if (args.length < 1) {
+//			
+//			System.out.println("not enough arguments");
+//			
+//			return;
+//			
+//		}
 
-		URL filePath = EncoderMain.class.getResource(args[0]);
+		URL filePath = TransformerMain.class.getResource("utf-16le.txt");
 
 		if (null == filePath) {
 			
@@ -28,13 +28,13 @@ public class EncoderMain {
 			
 		}
 		
-		Encoder encoder = null;
+		Transformer encoder = null;
 		
 		try {
 			
-			encoder = EncoderFactory.getEncodingMethod(new File(filePath.getPath()));
+			encoder = TransformerFactory.getEncodingMethod(new File(filePath.getPath()));
 			System.out.println(encoder.getEncodingType());
-			String translatedText = encoder.encode();
+			String translatedText = encoder.decode();
 			System.out.print(translatedText);
 			
 		} catch (EncoderNotSupportedException ense) {
