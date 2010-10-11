@@ -19,23 +19,24 @@ public class TransformerMain {
 //			
 //		}
 
-		URL filePath = TransformerMain.class.getResource("utf-16le.txt");
+		URL srcPath = TransformerMain.class.getResource("utf-8bom_hanja.txt");
+		
 
-		if (null == filePath) {
+		if (null == srcPath) {
 			
 			System.out.println("not exist " + "\"" + args[0] + "\"");
 			System.exit(0);
 			
 		}
 		
-		Transformer encoder = null;
+		Transformer transformer = null;
 		
 		try {
 			
-			encoder = TransformerFactory.getEncodingMethod(new File(filePath.getPath()));
-			System.out.println(encoder.getEncodingType());
-			String translatedText = encoder.decode();
-			System.out.print(translatedText);
+			transformer = TransformerFactory.getTransformer(new File(srcPath.getPath()));
+			System.out.println(transformer.getTransformationType());
+			String translatedText = transformer.decode();
+//			System.out.print(translatedText);
 			
 		} catch (EncoderNotSupportedException ense) {
 			
@@ -47,7 +48,7 @@ public class TransformerMain {
 			
 		} finally {
 			
-			encoder.close();
+			transformer.close();
 			
 		}
 	}
