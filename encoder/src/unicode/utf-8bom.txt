@@ -1,360 +1,1012 @@
-﻿StringBuffer.append("sdfdsf");
-invoking할때 "sdfdsf" String object 생성
+﻿UTF-8
+위키백과 ― 우리 모두의 백과사전.
+유니코드
+부호화 형식
+UTF-7
+UTF-8
+CESU-8
+UTF-16
+UTF-32
+UTF-EBCDIC
+SCSU
+퓨니코드
+GB18030
+UCS
+양방향 텍스트
+BOM
+한중일 통합 한자
+유니코드 범위 목록
+유니코드와 HTML
+유니코드와 전자 우편
+유니코드 글꼴
+UTF-8은 유니코드를 위한 가변 길이 문자 인코딩 방식 중 하나로, 켄 톰프슨과 롭 파이크가 만들었다. 본래는 FSS-UTF(File System Safe UCS/Unicode Transformation Format)라는 이름으로 제안되었다.
+UTF-8 인코딩은 유니코드 한 문자를 나타내기 위해 1바이트에서 4바이트까지를 사용한다. 예를 들어서, U+0000부터 U+007F 범위에 있는 ASCII 문자들은 UTF-8에서 1바이트만으로 표시된다. 4바이트로 표현되는 문자는 모두 기본 다국어 평면(BMP) 바깥의 유니코드 문자이며, 거의 사용되지 않는다. UTF-16과 UTF-8 중 어느 인코딩이 더 적은 바이트를 사용하는지는 문자열에서 사용된 코드 포인트에 따라 달라지며, 실제로 DEFLATE와 같은 일반적인 압축 알고리즘을 사용할 경우 이 차이는 무시할 수 있을 정도이다. 이러한 압축 알고리즘을 사용하기 힘들고 크기가 중요할 경우 유니코드 표준 압축 방식을 대신 사용할 수 있다.
+목차 [숨기기]
+1 구조
+2 변형된 UTF-8
+3 UTF-8의 설계 원칙
+4 오류 처리
+5 장점과 단점
+5.1 일반적으로
+5.2 기존의 인코딩들과 비교했을 때
+5.3 UTF-7과 비교했을 때
+5.4 UTF-16과 비교했을 때
+6 같이 보기
+7 외부 고리
+구조 [편집]
 
-왜 String object는 immutable인가?
+UTF-8은 여러 표준 문서에서 다른 방법으로 정의되어 있지만, 일반적인 구조는 모두 동일하다.
+유니코드 코드 포인트를 나타내는 비트들은 여러 부분으로 나뉘어서, UTF-8로 표현된 바이트의 하위 비트들에 들어 간다. U+007F까지의 문자는 7비트 ASCII 문자와 동일한 방법으로 표시되며, 그 이후의 문자는 다음과 같은 4바이트까지의 비트 패턴으로 표시된다. 7비트 ASCII 문자와 혼동되지 않게 하기 위하여 모든 바이트들의 최상위 비트는 1이다.
+코드 범위
+(십육진법)	UTF-16BE 표현
+(이진법)	UTF-8 표현
+(이진법)	설명
+000000-00007F	00000000 0xxxxxxx	0xxxxxxx	ASCII와 동일한 범위
+000080-0007FF	00000xxx xxxxxxxx	110xxxxx 10xxxxxx	첫 바이트는 110 또는 1110으로 시작하고, 나머지 바이트들은 10으로 시작함
+000800-00FFFF	xxxxxxxx xxxxxxxx	1110xxxx 10xxxxxx 10xxxxxx
+010000-10FFFF	110110yy yyxxxxxx 110111xx xxxxxxxx	11110zzz 10zzxxxx 10xxxxxx 10xxxxxx	UTF-16 서러게이트 쌍 영역 (yyyy = zzzzz - 1). UTF-8로 표시된 비트 패턴은 실제 코드 포인트와 동일하다.
+예를 들어서, 문자 "위"(U+C704)는 다음과 같은 방법으로 UTF-8로 인코딩된다.
+이 문자는 U+0800부터 U+FFFF 사이의 영역에 있으므로, 표에 따라 1110xxxx 10xxxxxx 10xxxxxx 형식으로 인코딩된다.
+16진수 C704는 2진수 1100-0111-0000-0100와 같다.
+이 비트들은 순서대로 x로 표시된 비트에 들어 간다: 11101100 10011100 10000100
+결과적으로 이 문자는 3바이트로 인코딩되며, 16진수로 표시하면 EC 9C 84가 된다.
+따라서 첫 128 문자는 1바이트로 표시되고, 그 다음 1920 문자 — 발음 구별 기호가 붙은 라틴 문자, 그리스 문자, 키릴 문자, 콥트 문자, 아르메니아 문자, 히브리 문자, 아랍 문자 — 는 2바이트로 표시되며, 나머지 문자들 중 BMP 안에 들어 있는 것은 3바이트, 아닌 것은 4바이트로 표시된다.
+위의 패턴을 사용하면 더 큰 코드 포인트를 표시할 수도 있다. 원래 UTF-8은 6바이트를 사용해서 U+7FFFFFFF까지의 코드 포인트를 표현할 수 있게 하였으나, 2003년 11월에 발표된 RFC 3629에서는 유니코드에서 실제로 정의하는 U+10FFFF까지의 문자만을 표시할 수 있도록 제한하였다. 따라서 이전까지는 UTF-8에서 나타날 수 없는 바이트가 0xFE와 0xFF 뿐이었지만, RFC 3629에 따라서 0xC0, 0xC1, 그리고 0xF5부터 0xFF까지의 13개의 바이트가 나타날 수 없게 되었다.
+변형된 UTF-8 [편집]
 
-왜 윈도우에서 io buffer크기는 8192byte를 기본으로 사용할까?
+자바는 내부적으로 문자열을 UTF-16 인코딩으로 저장하며, 문자열 직렬화를 위하여 UTF-8을 변형하여 사용하고 있다. 이를 변형된 UTF-8이라 부른다.
+표준 UTF-8과의 차이는 크게 두 가지로, 한 가지는 U+0000을 1바이트가 아니라 2바이트, 즉 11000000 10000000으로 표현하는 것이다. 따라서 수정된 UTF-8에서는 인코딩된 문자열에 널 문자가 나타나지 않게 되며, 따라서 널 문자를 문자열의 끝으로 사용하는 C와 같은 언어에서 처리할 때 문자열이 잘리는 것을 막을 수 있다.
+다른 한 가지 차이는 BMP 바깥의 문자를 인코딩하는 방법이다. 표준 UTF-8에서는 이 문자들은 위와 같이 4바이트로 인코딩되지만, 수정된 UTF-8에서는 이 문자들을 surrogate pair로 표시하여 두 문자로 나눈 뒤 같은 방법으로 인코딩한다. (이는 CESU-8과 동일하다) 이러한 방법은 자바의 문자 형이 16비트 크기이며, 따라서 U+10000 이상의 영역에 속한 유니코드 문자는 항상 두 개의 자바 문자로 표현되어야 한다는 것에서 유래하였다. 하지만 이 방법은 BMP 바깥의 문자를 UTF-8보다 더 긴 6바이트로 인코딩해야 한다.
+이러한 차이 때문에 이 인코딩은 UTF-8과 엄격하게 구별해야 하며, 자바에서 내부적인 처리에만 사용하도록 권장된다. 또한 UTF-8과는 달리 IANA에 정식으로 등록된 문자 인코딩이 아니므로 인터넷 상의 정보 교환을 위해 사용하지 않아야 한다.
+UTF-8의 설계 원칙 [편집]
 
-main의 argument로 받는 String의 encoding type은 무엇인가?
-콘솔에서 사용하는 codepage의 encoding type으로 들어감
-new String(입력문자열, 콘솔 인코딩)
+그 구조로부터, UTF-8이 다음과 같은 성질을 가지고 있다는 것을 알 수 있다.
+1바이트로 표시된 문자의 최상위 비트는 항상 0이다.
+2바이트 이상으로 표시된 문자의 경우, 첫 바이트의 상위 비트들이 그 문자를 표시하는 데 필요한 바이트 수를 결정한다. 예를 들어서 2바이트는 110으로 시작하고, 3바이트는 1110으로 시작한다.
+첫 바이트가 아닌 나머지 바이트들은 상위 2비트가 항상 10이다.
+UTF-8이 이런 성질을 가지도록 설계한 까닭은 어떤 경우에도 한 문자에 대한 바이트 표현이 다른 문자에 대한 바이트 표현의 일부가 되는 경우가 없도록 하기 위함이다. 따라서 텍스트 안에 들어 있는 다른 텍스트를 찾는 데 쓰이는 바이트 단위의 부문자열 매칭이 UTF-8 문자열에서도 쓰일 수 있다. 통합 완성형, Shift JIS, Big5과 같이 ISO 2022 체계에 부합하지 않는 이전의 가변 길이 인코딩은 그런 성질을 지니지 않았고 (기존 인코딩 가운데 EUC-KR이나 EUC-JP 등은 이 점에서는 UTF-8과 비슷한 성질을 지닌다.), 더 복잡한 알고리즘을 써야 했다. 왜냐하면, 이들 인코딩은 ASCII 영역의 글자를 나타내는 바이트를 2바이트로 나타내는 다른 글자의 두 번째 바이트로 사용하기 때문이다. 또한, UTF-8에서 하나 이상의 바이트들이 손실되었을 때도, 다음의 정상 문자를 찾아서 동기화할 수 있기 때문에 피해를 줄일 수 있다.
+그 설계 때문에 어떤 바이트들이 올바른 UTF-8로 확인되면, 그 문자열이 실제로 UTF-8로 인코딩되었을 가능성이 매우 높다. 임의의 바이트들이 순수한 ASCII 인코딩이 아닌 UTF-8 문자열일 가능성은 2바이트 문자의 경우 1/32, 3바이트 문자의 경우 5/256으로 매우 낮다. 또한 ISO-8859-1과 같은 기존의 인코딩으로 표현된 자연어 문자열이나 문서를 UTF-8로 표현된 것으로 오인할 가능성도 매우 낮다.
+오류 처리 [편집]
 
+잘못된 입력이 들어 왔을 때 UTF-8 디코더가 해야 할 동작은 표준들에 일정하게 정의되어 있지 않다. 일반적으로 이러한 경우에 디코더가 취할 수 있는 동작은 다음과 같을 수 있다.
+U+003F(?, 물음표)나 U+FFFD(�, 유니코드 대치 문자) 같은 다른 문자를 집어 넣는다.
+해당 바이트들을 무시한다.
+해당 바이트들을 다른 인코딩으로 해석한다.
+오류로 처리하지 않고 UTF-8과 비슷한 형식으로 취급하여 디코딩한다. (이러한 동작은 디코더의 버그일 수도 있다)
+오류를 보고한다.
+또한 디코더들은 다른 잘못된 입력에 대해서 다른 동작을 보일 수 있다.
+RFC 3629에서는 UTF-8 디코더들이 ‘너무 긴 형식’, 즉 해당 문자를 표현하는 데 필요한 최소의 바이트보다 더 많은 바이트를 사용해서 표현한 바이트들을 잘못된 입력으로 처리해야 한다고 요구하고 있다. 유니코드 표준에서는 유니코드를 따르는 디코더가 ‘잘못된 형식으로 표현된 모든 단위 문자열을 오류로 처리하고, 따라서 잘못된 형식으로 표현된 단위 문자열을 해석하거나 생성해 내서는 안 된다’라고 요구하고 있다.
+모든 가능한 해석은 장단점을 가지고 있으며, 만약 UTF-8을 해석하기 전에 검증이 이루어질 경우 보안 관련해서 주의가 요구된다.
+너무 긴 형식은 처리하기 곤란한 경우 중 하나이다. 현재의 RFC에는 이러한 형식이 디코드되어서는 안 된다고 규정하고 있지만, 옛 UTF-8 표준에는 경고만 하였으며 대부분의 간단한 디코더들은 이러한 데이터를 정상적으로 해석한다. 이 형식은 실제로는 같은 코드 포인트를 서로 다른 두 개의 UTF-8 문자열로 나타내어 마이크로소프트의 IIS 웹 서버와 같은 제품의 보안 검증을 우회하는 데 사용되었다.
+잘못된 입력이 들어 왔을 때 보안을 지키기 위해서는 두 가지 선택이 있다. 한 가지는 입력을 검증하기 전에 항상 UTF-8로부터 디코드하는 것이며, 다른 한 가지는 잘못된 입력을 언제나 오류로 처리하는 엄격한 디코더를 사용하는 것이다.
+장점과 단점 [편집]
 
-BMP내의 문자는 surrogate영역의 값이 다 똑같고
-surrogate값이 바뀌면 다른 MP를 참조한다
+일반적으로 [편집]
+장점
+ASCII 인코딩은 UTF-8의 부분 집합이다. 일반적인 ASCII 문자열은 올바른 UTF-8 문자열이며, 따라서 하위 호환성이 보장된다.
+UTF-8 문자열은 바이트 단위로 정렬을 수행하는 알고리즘으로도 코드 포인트 단위로 올바르게 정렬할 수 있다. (일반적인 목적으로는 재정렬이 필요하다)
+UTF-8과 UTF-16은 XML 문서의 표준 인코딩으로, 다른 인코딩들을 사용하려면 외부에서, 또는 문서 안에서 명시적으로 인코딩을 정해야 한다. [1]
+다른 인코딩과의 왕복 변환이 간단하다.
+바이트 단위 문자열 검색 알고리즘들을 그대로 사용할 수 있다.
+간단한 알고리즘을 통하여 UTF-8 문자열임을 확인할 수 있다. 즉, 다른 인코딩에서 나타나는 바이트들이 올바른 UTF-8 문자열일 가능성은 낮다.
+U+0000을 표현할 때를 제외하면, 널 문자는 UTF-8 문자열 안에 나타나지 않는다. 따라서 널 문자로 끝나는 문자열을 사용하는 C 언어의 문자열 함수(strncpy() 같은)를 그대로 사용할 수 있다.
+단점
+나쁘게 만들어진(그리고 현재 표준을 따르지 않는) UTF-8 파서는 서로 다른 가짜 UTF-8 표현(예를 들어서 너무 긴 형식)을 같은 유니코드 문자열로 해석할 수 있다.
+기존의 인코딩들과 비교했을 때 [편집]
+장점
+UTF-8은 모든 유니코드 문자를 표현할 수 있다. 예를 들어서, UCS-2는 BMP 안의 문자만을 표현할 수 있다.
+바이트 경계를 순서대로 혹은 역순으로 찾기 쉽다. 만약 여러 바이트로 표시된 문자의 중간에서 찾기 시작한다면, 단지 해당 문자만 손실되고 나머지 문자들은 손상을 입지 않는다. 기존의 많은 다중바이트 인코딩들은 이러한 재동기화가 훨씬 힘들다.
+한 문자를 표현하는 바이트 표현은 다른 문자를 표현하는 어떤 바이트 표현에도 포함되지 않는다. 따라서 ASCII 문자가 아닌 값들에 투명한 파일 시스템이나 다른 소프트웨어(예를 들어서 C의 printf() 함수)와 호환성을 가진다.
+바이트 표현의 첫 바이트만 사용하여 해당 바이트 표현의 길이를 결정할 수 있다. 따라서 부분 문자열을 얻는 과정이 매우 쉽다.
+인코딩에 간단한 비트 연산만 사용되므로 효과적이다. UTF-8은 곱셈이나 나눗셈과 같은 느린 연산들을 사용하지 않는다.
+단점
+대부분의 UTF-8 문자열은 일반적으로 적당한 기존 인코딩으로 표현한 문자열보다 더 크다. 판독 기호를 사용하는 대부분의 라틴 알파벳 문자는 적어도 2바이트를 사용하며, 한중일 문자들과 표의 문자들은 적어도 3바이트를 사용한다.
+한중일 문자들과 표의 문자를 제외한 거의 모든 기존 인코딩들은 한 문자에 1바이트를 사용하므로 문자열 처리가 간편한 반면, UTF-8은 그렇지 않다.
+UTF-7과 비교했을 때 [편집]
+장점
+UTF-8은 한 문자를 표현하는 데 UTF-7보다 더 적은 바이트들을 사용한다.
+UTF-8은 "+"를 그대로 인코딩하지만 UTF-7은 "+-"로 인코딩한다.
+단점
+UTF-8은 8비트 안전한 전송 체계가 필요하다. 전자 우편에서 quoted-printable이나 base64 인코딩을 사용한다면 전송량이 더 많아진다. 예를 들어서 base64 인코딩의 경우 인코딩된 결과는 원본보다 약 33% 더 커진다. 하지만 최근에는 대부분의 SMTP 서버가 8BITMIME을 지원하기 때문에 이런 단점은 크게 부각되지 않는다.
+UTF-16과 비교했을 때 [편집]
+장점
+U+0000부터 U+007F까지의 공백과 문장 부호를 포함한 ASCII 문자들은 1바이트로 표현할 수 있기 때문에, 한중일 문자와 표의 문자를 사용하지 않는 대부분의 문자열을 UTF-16보다 더 작은 크기로 표현할 수 있다.
+유닉스의 파일 시스템과 여러 도구들은 옥텟을 기본 단위로 하며, 널 문자와 경로 식별자(/, 0x2F)에 특별한 의미를 부여하는 경우가 많다. 0x00이나 0x2f 옥텟이 U+0000과 U+002F가 아닌 다른 문자에서도 나타날 수 있는 UTF-16 등의 인코딩과는 달리, UTF-8은 ASCII와 호환되기 때문에 0x00이나 0x2f 옥텟이 항상 U+0000과 U+002F에 대응되므로 기존 API를 약간 수정해서 쓸 수 있다.
+UTF-16은 바이트 순서를 나타내기 위하여 바이트 순서 문자(BOM, U+FEFF)가 필요하지만, UTF-8은 바이트 순서가 정해져 있기 때문에 BOM이 필요하지 않다.
+단점
+UTF-8은 가변 길이 인코딩이며, 다른 문자는 다른 바이트 수로 표현될 수 있다. 사실 이 문제는 별로 심각한 것이 아니며, UTF-8 문자열을 다루기 위한 추상적인 인터페이스를 만드는 것으로 해결될 수 있다. 실제로 기술적으로는 UTF-16도 BMP 바깥 문자를 4바이트로 표현하기 때문에 가변 길이 인코딩이다.
+BMP에 들어 있는 한중일 문자들은 UTF-8에서 3바이트로 표현되지만, UTF-16에서는 2바이트로 표현된다. 따라서 UTF-8에서는 이러한 문자를 표현하기 위하여 더 많은 바이트가 필요하며 UTF-16과 비교할 때 최대 50%까지 크기가 늘 수 있다. 하지만 반대로 U+0000부터 U+007F 사이의 글자들은 UTF-16에서 크기가 두 배로 늘기 때문에 실질적으로는 큰 문제가 없을 수도 있다.
 
-for (int j = 0; j < 3; j++) {
-	for (int i = 0; i < Byte.SIZE; i++) {
-		System.out.print((buffer[j] >> Byte.SIZE - (i+1)) & 0x1);
-	}
-	System.out.print(' ');
-}
+UTF-16
+위키백과 ― 우리 모두의 백과사전.
+유니코드
+부호화 형식
+UTF-7
+UTF-8
+CESU-8
+UTF-16
+UTF-32
+UTF-EBCDIC
+SCSU
+퓨니코드
+GB18030
+UCS
+양방향 텍스트
+BOM
+한중일 통합 한자
+유니코드 범위 목록
+유니코드와 HTML
+유니코드와 전자 우편
+유니코드 글꼴
+UTF-16(16-bit Unicode Transformation Format)은 유니코드 문자 인코딩 방식의 하나이다. 주로 사용되는 기본 다국어 평면 (BMP, Basic multilingual plane)에 속하는 문자들은 그대로 16비트 값으로 인코딩이 되고 그 이상의 문자는 특별히 정해진 방식으로 32비트로 인코딩이 된다.
+UTF-16은 유니코드 컨소시움과 ISO/IEC 10646에 의해 정의되어 있다. 유니코드는 거기에 추가적인 내용을 정하고 있다. 정확한 차이점은 유니코드 4.0 표준의 부록편 C 부분이 자세히 기술되어 있다. ISO 표준은 UCS-2 인코딩도 정의하며 여기선 BMP의 16비트 표현만을 다룬다.
+기본 다국어 평면은 U+0000 에서 U+FFFF 에 놓인 문자를 담고 있다. 이 영역에는 우리가 쉽게 생각할 수 있는 문자들이 포함되며, 한글, 한자 등은 모두 여기에 포함되어 있다. 이 영역에는 서러게이트 문자(surrogate)들이 준비되어 있어 16비트 이상의 문자를 표현할 때를 대비해 놓았다.
+기본 다국어 평면의 문자들은 곧바로 16비트 값으로 대응되어 인코딩되며, 이 경우에는 인코딩된 바이트 스트링의 엔디언만 조심하면 된다.
+UTF-16-문자
+Bit
+|15            8|7             0|
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|y y y y y y y y|x x x x x x x x|
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+UTF-16BE-코드
+    첫 번째 Byte         두 번째 Byte
+|7             0| |7             0|
++-+-+-+-+-+-+-+-+ +-+-+-+-+-+-+-+-+
+|y y y y y y y y| |x x x x x x x x|
++-+-+-+-+-+-+-+-+ +-+-+-+-+-+-+-+-+
+UTF-16LE-코드
+    첫째 Byte          두 번째 Byte
+|7             0| |7             0|
++-+-+-+-+-+-+-+-+ +-+-+-+-+-+-+-+-+
+|x x x x x x x x| |y y y y y y y y|
++-+-+-+-+-+-+-+-+ +-+-+-+-+-+-+-+-+
 
-i18n를 사용한 프로그램의 특징들
-1.현지화 데이터의 추가를 통해 전세계에서 동작할 수 있다
-2.화면에 출력하는 메세지와 GUI label같은 것들을 일일이 바꿔주는 작업이 필요없다
-3.새로운 다른 언어를 지원하기위해 recompliation할 필요없다
-4.날짜/시간, 통화같은 문화적으로 연관된 데이터들이 최종 사용자의 지방과 언어에 맞는 형식으로 나타난다
-5.빠르게 현지화를 할 수 있다
+기본 다국어 평면에 포함되지 않는 문자들, 즉 16비트로 값을 표현할 수 없는 문자들은 서러게이트(Surrogate) 문자 영역에 해당하는 두 개의 16비트 문자로 변환되어 이 한 쌍(즉 32비트)이 그 문자를 나타내게 된다. 그 자세한 방식은 다음 그림을 통해 설명한다.
+Bit
+31            24|23           16|15            8|7             0|
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|0 0 0 0 0 0 0 0|0 0 0 z z z z z|x x x x x x y y|y y y y y y y y|
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+High-Surrogate (U+D800 ... U+DBFF)
+|15            8|7             0|
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|1 1 0 1 1 0 Z Z|Z Z x x x x x x|
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+Low-Surrogate (U+DC00 ... U+DFFF)
+|15            8|7             0|
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|1 1 0 1 1 1 y y|y y y y y y y y|
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+유니코드 문자 영역에서 상위 서러게이트는 U+D800 에서 U+DBFF 까지의 값을 갖는다. 즉 최상위비트 6개의 값이 그림에서 보듯이 110110 으로 일정하다. 마찬가지로 하위 서러게이트는 U+DC00 에서 U+DFFF 까지의 값을 가지며 최상위비트 6개의 값은 110111 이 된다. 각 서러게이트 문자는 하위 10비트씩의 자유도를 갖는다. 따라서 주어진 문자를 10비트씩 두조각을 내서 상위 서러게이트와 하위 서러게이트에 배정한 것이다.
+여기서 다음을 만족한다.
+ZZZZ=zzzzz-1.
+이 방법으로 UTF-16 인코딩이 가능한 유니코드 문자의 범위가 나온다.
+zzzzz=00000 이라면, 문자는 16비트 이하로 표현이 가능하다. 즉, U+00xxxx 그대로 대응되는 값을 써주면 된다. 그렇지 않다면, ZZZZ=0000..1111 이 되며,zzzz=00001..10000 = U+01xxxx .. U+10xxxx
+이 두 개의 서러게이트 문자는 상위 서러게이트, 하위 서러게이트로서 전송이 된다. 이 방법으로 U+10FFFF 까지의 문자를 인코딩 할 수 있다.
+예시 [편집]
 
-i18n 지원을 위한 단계
-1. properties file들을 만든다
-hi = 안녕
-lanch = 점심
-등등......
-=을 기준으로 왼쪽은 오른쪽 문자열에 대응하는 key로 볼 수 있다
-properties파일은 fileName_언어_국가.properties 형식의 이름으로 저장한다
-fileName, 언어, 국가는 임의로 지을 수 있지만 직관적으로 하는 것이 좋다
-
-2. properties file 사용하기
-Locale class를 통해 다양한 language, country를 지정한다
-Locale object를 생성할 때 language, country 를 constructor의 parameter로 넣는다
-다음 ResourceBundle class를 사용해 properties에 작성한 data를 사용할 수 있는데
-ReousrceBundle.getBundle(fileName, Locale) method를 사용해 properties의 data를 hashtable로 만들고 ResourceBundle object를 얻는다.
-이렇게 얻어낸 ResourceBundle object의 getString(key)를 사용해 지정한 language, country에 맞는 data를 얻을 수 있다
-
-3. i18n은 다음 사항을 필수로 확인해야 한다
-1. 화면에 표시하는 message
-2. GUI에 출력되는 label
-3. online 도움말
-4. sounds
-5. colors
-6. graphics
-7. 시간/날짜/숫자/통화/전화번호/존칭,직급/주소/page layouts
-
-Isolate Translatable Text in Resource Bundles
-(Resource Bundles안의 변환할 수 있는 text 격리하기)
-변환에는 비용든다. text를 격리하므로써 비용을 줄이는데 도움이 되는데 반드시 ResourceBundle object안에서 변환되어 있어야 한다.
-변환할 수 있는 text는 status message, error message, log file entries, GUI label을 포함한다. 이 text는 프로그램안으로 하드코딩되고 국제화되어 있지 않다.
-하드코딩된 text들 모두를 Resource Bundles로 위치시키는 것이 필요하고********
-아래처럼 작성된 부분은 모두 재정리를 해야한다
-String label = "ok";
-JButton button = new JButton(label);
-
-Setting the locale
-국제화된 프로그램은 정보를 전세계에 다르게 보여줄 수 있다.
-다양한 언어/국가별로 국제화된 프로그램을 어떻게 식별하여 사용할 수 있을까?
-Locale object를 참조하여 쉽게 할 수 있다.
-Locale object는 언어와 지역을 결합하여 명세하기 위한 고유의 식별자다.
-한 class가 Locale에 따라 적합하게 동작하도록 변한다면 locale-sensitive라고 말한다.
-NumberFormat class는 locale-sensitive이다. 숫자의 형식은 Locale에 의존하여 반환한다.
-Locale object는 오직 식별자이다.
-
-Creating a Locale
-Locale object를 만들려면 대표적인 언어code와 지역code를 명시한다.
-같은 영어권이지만 지역이 다른 미국(Unite States)와 영국(Grate Britian)에 해당하는 Locale object를 만든는 예제다
-Locale usLocale = new Locale("en", "US");
-Locale brLocale = new Locale("en", "GB");
-첫번째 argument는 언어code로 2개의 소문자로 ISO-639를 따른다.
-두번째 argument는 지역code로 2개의 대문자로 ISO-3166을 따른다.
-이것외에 구분을 해야 할 필요가 있다면 3번째 parameter를 명시할 수 있는데 variant code라고 한다. 대부분 variant code는 computing platform을 명시한다.
-같은 언어와 지역이지만 다른 OS일 경우의 예제다
-Locale usLocale = new Locale("en", "US", "UNIX");
-Locale usLocale = new Locale("en", "US", "WINDOWS");
-variant code는 표준이 없다. variant code로 만들어진 Locale object는 해당 application만 알수있다.
-지역code와 variant code는 선택적이다.지역code를 넣지 않았다면  ""을 명시한다.
-Locale usLocale = new Locale("en", "");
-편한 방법으로 사용할수 있게 Locale class에서 몇몇 언어와 국가의 constant를제공한다.
-다음 두 문장은 같은 Locale object를 생성한다.
-Locale brLocale = Locale.JAPAN;
-Locale usLocale = new Locale("ja", "JP");
-언어 constant는 지역은 정의되지 않았다
-다음 두 문장은 같은 Locale object를 생성한다.
-Locale brLocale = Locale.JAPANESE;
-Locale usLocale = new Locale("ja", "");
-
-Identifying Available Locales
-Locale object는 단지 식별자일 뿐이다.
-Locale object가 다른 object로 넘겨져야 진짜 작업을 한다.
-이러한 다른 object를 locale-sensitive라고 부른다.
-locale-sensitive class가 인식할 수 있는 Locale선언 종류는 getAvailableLocales method로 찾아낼 수 있다.
-Locale list를 반환하는데 toString method로 출력할 수 있다.
-지역과 언어코드사이에 unserscore를 넣어 구분한다.
-알기쉽게 볼수 있도록 출력하기 위해서 getDisplayName method를 호출한다.
-출력되는 list는 java platform 구현에 의존하므로 다르게 나올 수 있다.
-
-The Scope of a Locale
-java platform은 프로그램 전체에 쭉 같은 locale을 사용하는 것을 요구하지 않는다.
-원한다면 프로그램내부의 모든 locale-sensitive object에 다른 Locale을 할당할 수 있다.
-이 유연함은 여러나라말의 applications를 개발할 수 있게한다.
-이렇더라도 대부분의 applications는 여러나라말로 되지 않았고 locale-sensitive objects는 default Locale에 의지한다. JVM이 시작할 때 Locale이 set되는데 default locale은 host platform의 locale로 맞추어진다.
-JVM의 default Locale로 결정하기위해 Locale.getDefault method를 호출한다.
-default Locale은 프로그램적으로 set하지 말이야 한다. 모든 locale-sensitive classes에 의해 공유되기 때문이다.
-Locale-Sensitive Services SPI
-이것의 특징은 locale의존적인 data와 서비스의 plug-in이 가능하게 한다.
-이 방법을 통해 third parites는 java.text, java.util pacakage안의 대부분의 locale-sensitive의 구현을 제공할 수 있다.
-SPIs의 구현은 abstract class와 interface에 기반을 두고 서비스 제공자에 의해 구현된다.
-다음과 같은 locale sensitive 구현을 사용할 수 있다.
-l	BreakIterator objects
-l	Collator objects
-l	Language code, Country code, and Variant name for the Locale class
-l	Time Zone names
-l	Currency symbols
-l	DateFormat objects
-l	DateFormatSymbol objects
-l	NumberFormat objects
-l	DecimalFormatSymbols objects 
-
-2개 package java.util.spi와 java.text.spi에 위의 SPIs를 전부 담고 있다.
-java.util.spi	java.text.spi
-l	CurrencyNameProvider
-l	LocaleServiceProvider
-l	TimeZoneNameProvider	l	BreakIteratorProvider
-l	CollatorProvider
-l	DateFormatProvider
-l	DateFormatSymbolsProvider
-l	DecimalFormatSymbolsProvider
-l	NumberFormatProvider
-
-새로운 locale을 위해 NumberFormat object를 제공하는 것을 원한다면 java.text.spi package에 NumberFormatProvider class를 구현해야 한다.
-이 class를 확장하고 아래 methods를 구현할 필요가 있다.
-getCurrentcyInstance(Locale locale)
-getIntegerInstance(Locale locale)
-getNumberInstance(Locale locale)
-getPercentInstance(Local loca)
-사용예)
-Locale loc = new Locale("da", "DK");
-NumberFormat nf = NumberFormatProvider.getNumberInstance(loc);
-구현한 methods는 가장 먼저 요청된 locale의 jre이 지원여부를 검사한다.
-지원한다면 그대로 사용한다.
-지원하지 않는 다면 위 methods는 설치된 providers의 getAvailableLocales() method를 호출한다. 요청된 locale을 지원하는 provider를 찾기위해.
-
-Lesson : Isolating Locale-Specific Data
-About the ResourceBundle Class
-How a ResourceBundle is Related to a Locale
-개념적으로 각각의 ResourceBundle은 같은 base name을 공유하는 관련된 subclass의 집합이다.
-ButtonLabel base name
-ButtonLabel_de base name_language code
-ButtonLabel_en_GB base name_language_code_coutry_code
-ButtonLabel_fr_CA_UNIX name_language_code_coutry_code_variant code
-적합한 ResourceBundle을 선택하기 위하여 ResourceBundle.getBundle method를 호출한다. 아래 예제는 French, Canada, UNIX에 맞는 Locale을 위한 ButtonLabel ResourceBundle을 선택하는 예제다.
-Locale currentLocale = new Locale("fr", "CA", "UNIX");
-ResourceBundle introLabels =
-    ResourceBundle.getBundle("ButtonLabel", currentLocale);
-만약 위에서 명시된 Locale을 위한 ResourceBundle class가 없으면 getBundle은 가깝게 일치하는 것을 찾기위해 여러번 시도한다.
-ButtonLabel_fr_CA_UNIX가 원래 원하던 것이고 default Locale은 en_US라면 getBundle은 다음 순서로 조사할 수 있다.
-ButtonLabel_fr_CA_UNIX
-ButtonLabel_fr_CA
-ButtonLabel_fr
-ButtonLabel_en_US
-ButtonLabel_en
-ButtonLabel
-Note that getBundle looks for classes based on the default Locale before it selects the base class (ButtonLabel).
-getBundle이 classes의 이전 list안에서 일치하는 것을 못찾으면MissingResourceException을 던진다. 이 예외를 피하기 위해 접미사가 없는 base class를 항상 제공해야 한다.
-
-The ListResourceBundle and PropertyResourceBundle Subclasses
-Abstract class ResourceBundle은 2개의subclass를 갖는다.
-PropertyResourceBundle과 ListResourceBundle이다
-PropertyResourceBundle은 properties file로부터 지원받는다. Properties file은 변환할 수 있는 text를 담은 plain-text file이다.
-Properties files는 java source code의 일부가 아니고 오직 String object를 위한 value를 담을 수 있다. 다른 종류의 object를 저장하기 원한다면 ListResourceBundle를 대신 사용한다.
-ListResourceBundle class는 사용하기 편리한 list로 resources를 관리한다. 각각의 ListResourceBundle은  class file로 부터 지원받는다. ListResourceBundle안에 모든 독특한 locale object를 저장할 수 있다. To add support for an additional Locale, you create another source file and compile it into a class file.
-ResourceBundle class는 유연하다. PropertyResourceBundle안에 Locale-specific String object를 처음 넣고 나중에 ListResourceBundle을 사용하기로 결정했을 때 code에는 아무런 충돌이 없다. ButtonLabel이 class로부터 지원받던 properties file로부터 지원받던 상관없이 getBundle을 호출해서 적합한 Locale을 위해 ResourceBundle을 찾아올 수 있다.
-ResourceBundle introLabels =
-    ResourceBundle.getBundle("ButtonLabel", currentLocale);
-
-Key-Value Pairs
-ResourceBundle object는 key-value pairs의 array를 담고있다. ResourceBundle로부터 값을 찾아오기 원한다면 Key를 열거한다. 단 반드시 String이 되야 한다.
-Value는 locale-specific object이다. 아래 예제에서 keys는 OkKey와 CancelKey이다
-class ButtonLabel_en extends ListResourceBundle {
-    // English version
-    public Object[][] getContents() {
-	return contents;
-    }
-    static final Object[][] contents = {
-	{"OkKey", "OK"},
-	{"CancelKey", "Cancel"},
-    };
-}
-ResourceBundle로부터 OK String을 찾아내기 위해서 getString을 호출할 때 적합한 key를 명시한다.
-String okLabel = ButtonLabel.getString("OkKey");
-Properties file은 key-value pairs를 담고 있다. Key는 “=”의 왼쪽이고 value는 오른쪽이다. 각각의 pair는 line으로 자른다. Value는 아마 String object만 표현할 수 있다. 다음 예제는 ButtonLabel.properties로 지어진 properties file의 내용이다
-OkKey = OK
-CancelKey = Cancel
-
-Preparing to Use a ResourceBundle
-Identifying the Locale-Specific Objects
-
-Working with Text
-
-checking character properties
-문자type을 확인하기 위해 variable과 riteral의 직접비교는 영어와 몇몇 언어를 제외하고 정확한 방식이 아니다
-Character class의 isLetter/Digit/SpaceChar method를 사용해 검사해야 한다
-Character class의 methods는 Unicode표준을 기반으로 하기 때문에 신뢰할 수 있다
-Unicode는 16bit character encoding은 세계의 대부분 언어들을 지원한다
-java language에서 char value는 Unicode characters로 표현한다
-Character class의 method로 char의 properties를 검사한다면 이것으로 작성한 code로 전세계 대부분의 언어를 작업할 수 있다.
-유용한 methods는
-isDigit/Letter/LetterOrDigit/LowerCase/UpperCase/SpaceChar/Defined 가 있다.
-
-comparing strings
-application을 영어권 사람들을 대상으로 제한한다면 String.compareTo method로 문자열비교를 수행할 수 있다. String.compareTo method는 두개 문자열의 Unicode characters의 binary를 비교를 수행한다. 대부분 언어에서 binary comparison을 통해 문자열 정렬을 하는 것에 대한 결과는 신뢰할 수 없다. Unicode value는 characters의 순서와 일치하지 않는다.
-다행히 Collator class가 다른 언어들에서도 string comparison을 수행할 수 있게 해준다.
-
-performing locale-independent comparisons
-비교rules를 문자열의 정렬순서를 정의한다
-locale을 통한 rule을 따른다 다양한 언어들은 제각각 정렬순서가 다르게 때문이다.
-Collator class에 의해 미리 정의된 비교rules가 제공되고 locale에 독립적으로 문자열들을 정렬할 수 있다.
-instance를 얻기위해 Collator class의 getInstance method를 호출한다.
-대부분 default locale로 생성한다.
-Collator를 생성할 때 locale을 명시해서 정확하게 얻을 수있다.
-getInstance method는 RuleBasedCollator를 반환한다. Collator의 구체적인 subclass이다.
-RuleBasedCollator는 rules의 set을 담고 명시한 locale을 위한 정렬순서를 결정한다.
-rules는 각각의 locale을 위해 미리정의되어 있다. rules는 RuleBasedCollator안에 캡슐화되어 있어 프로그램이 특별한 routines를 
-Collator.compare method를 호출하면 locale에 독립적인 문자열 비교를 수행한다.
-compare method는 integer결과를 반환한다. 앞의 문자열의 순서가 낮으면 -1, 두문자열이 일치하면 0, 뒤의 문자열의 순서가 높으면 1이다.
-정렬 연산을 수행할 때 compare method를 사용한다
-
-Customizing collation rules
-사전정의된 collator rules를 사용해서 원하는 결과를 볼 수없다면 원하는 rules를 설계하고  RuleBasedCollator object에 할당할 수 있다.
-직접제작한 비교 rules는 String object안에 담겨지고 RuleBasedCollator의 constructor로 넘겨진다.
-< a < b < c < d 가 있으면 a는 b보다 낮고 c는 둘보다 높고 d도 이런식이다.
-이제 compare method는 문자열을 비교할 때 Customized collation rules를 참조한다.
-collation rule을 생성하기 위해 사용되는 전체문법은 훨씬 유연하고 복잡하다.
-문법에 대한 설명은 RuleBasedCollator class API에 전부 나와있다.
-
-Improving Collation Performance
-문자열들이 많은 list를 정렬하는 것은 시간낭비가 심하다.
-정렬 알고리즘이 반복적으로 문자열들을 비교한다면 CollationKey class를 사용해서 처리속도를 향상시킬 수 있다.
-CollationKey oject는 String과 Collator를 얻기 위한 sort key를 표현한다. 두개의 CollationKey object를 비교하는 것은 sort keys의 bit비교를 수행하는데 Collator.compare method보다 비교가 더 빠르다.
-하지만 CollationKey object를 생성하는 것은 시간이 요구된다.
-한 문자열이 단지 한번 비교되었다면 Collator.compare가 더 나은 성능을 제공한다.
-
-Detecting Text Boundaries
-어떤 워드 프로세서의 단어잘라내기, character highlignting, 다음 문장으로 커서이동, 줄의 마지막과 단어를 엵기 같은 공용기능은 고려해야한다. 이 기능들을 수행하려면 문자열안에 논리적 경계들을 찾아낼수 있어야 한다. 이런 경계분석 routine을 직접작성하지 않아도 BreakIterator class에서 제공하는 methods에서 혜택을 얻을 수 있다.
-About the BreakIterator Class
-BreakIterator class는 locale에 예민한데 문자열의 경계는 언어를 따라 다르기 때문이다.
-BreakIterator class는 다음 4가지 유형의 경계를 분석할 수 있다.
-문자, 단어, 문장, 잠재적인 문장잘림.
-instance를 얻기위해 각각의 factory method를 호출한다.
-getCharacterInstance/WordInstance/SentenceInstance/LineInstance
-각 instance는 단지 한 종류의 경계만 찾을 수 있다.
-문자와 단어 경계위치를 동시에 원한다면 두개의 instance를 따로 만든다.
-BreakIterator는 가상의 커서를 갖고 이 커서는 text의 한 문자열의 현재 경계의 point다.
-previous, next methods로 text안에서 커서를 움직일 수 있다.
-getWordInstance로 BreakIterator를 생성했다면 next method가 호출될 때마다 커서는 text안에서 다음 번 단어경계로 이동한다. 커서이동 methods는 경계의 위치를 가리키는 정수를 반환한다. 이 위치는 text string안에 있는 문자의 index로 이것은 경계를 쫓는다.
-string index들같은 경계들은 0을 기준으로 한다.첫 경계는 0이고 마지막 경계는 문자열의 전체길이값이다. 
-next, previous methods에 의해 찾아진 단어경계들이다
-  
-BreakIterator class는 인간언어 text에만 사용할 수 있다.
-programming language를 토큰화하기 위해서는 StreamTokenizer class를 사용한다.
-
-Character Boundaries
-개별적인 characters의 highlighting과 text에서 한 character씩 커서가 이동하도록 해야 한다면 characters의 경계들의 위치를 알아내는 것이 필요하다.
-BreakIterator를 생성하는 것은 character 경계들의 위지를 알아내고 
-character가 하나 이상의 Unicode character로 조합되어 있을 수 있다. 
-ü같은 캐릭터는 Unicode character \u0075 (u) 와 \u00a8 (¨) 가 결합되어져 있다.
-최상의 예는 아니다. single Unicode character \u00fc 에 의해 표현할 수 있기 때문이다.
-  집을 의미하는 아라비아어다.
-이 단어는 세개의 character를 담고 있다. 그러나 6개 Unicode character로 조합되었다.
-String house = "\u0628"+"\u064e"+"\u064a"+"\u0652"+"\u067a"+"\u064f";
-house string안의 Unicode characters중 1,3과 5번째 character는 구별자다.
-아라비아어는 구별자가 필요한데 이것들로 단어의 의미를 바꿀수 있다. 위 예제에서 구별자는 nonspacing characters인데 base characters 위에 나타나기 때문이다.
-string안에서 characters을 스캔하기위해서는 반드시 BreakIterator를 사용해야 한다.
-BreakIterator를 사용해 위예제의 경계를 얻어내면 0,2,4,6이 나온다.
-구별자 1,3,5는 list에 포함되지 않는다.
-
-Word Boundaries
-단어 경계들을 찾는 BreakIterator의 instance를 얻기위해 getWordInstance method를 호출한다.
-단어들 각각에 연산을 수행해야 할 필요가 있다. 워드 프로세서의 공통기능인 selecting, cutting, pasting, copying, word search와 단순한 문자열에서 전체 단어들을 반드시 구분할 수 있어야 한다.
-BreakIterator가 단어경계들을 분석할 때 단어들과 characters 사이를 구별하는 것은 단어들의 일부가 아니다.
-spaces, tabs, punctuation marks, most symbols 가 양쪽단어경계를 갖는다.
-다음예제는 target string아래에 ^문자에 의해 단어경계가 표시된다.
-She stopped.   She said,   "Hello there,"   and then went on.
-^   ^^          ^^ ^   ^^     ^^^^      ^^      ^^^^    ^^    ^^     ^^ ^^
-
-Sentence Boundaries
-문장경계들을 결정하기 위해 BreakIterator를 사용할 수 있다.
-getSentenceInstance method로 BreakIterator의 instance를 얻는 것으로 시작한다.
-구체적인 내용은 Word Boundaries에서 다룬 내용과 같다.
-다음 예제는 target문장에 ^문자에 의해 문장경계가 표시된다.
-She stopped.  She said, "Hello there," and then went on.
-^                   ^                                                          ^
-He's vanished!  What will we do?  It's up to us.
-^                      ^                        ^                ^
-
-Please add 1.5 liters to the tank.
-^                                             ^
-
-Line Boundaries
-서식text같은 것들을 line wrapping하려면 잠재적인 줄바꿈 위치를 반드시 찾아내야 한다.
-getLineInstance method로 BreakIterator instnace를 얻어 줄바꿈 위치 혹은 경계들을 찾아낼 수 있다.
-BreakIterator는 string안에서 다음 line과 연결되어 잘려진 text의 위치를 결정한다.
-BreakItertor에 의해 찾아진 위치는 잠재적인 줄바꿈들이다. 진짜 줄바꿈들은 아마 같지않게 screen에 출력되어있다.
-다음 예제는 line경계밑에 ^문자가 표시된다.
-BreakIterator에 따라 한line경계는 whitespace characters(space, tab, new line)의 한 순서가 종료한뒤에  line경계가 발생한다.
-She stopped.  She said, "Hello there," and then went on.
-^     ^             ^    ^       ^       ^       ^ ^     ^      ^      ^   ^
-잠재적인 줄바꿈도 마찬가지로 -문자뒤에 즉시 일어난다 .
-
-Converting Non-Unicode Text
-java에서 char value는 Unicode characters로 표현한다.
-Unicode는 16bit character encoding으로 전세계의 대부분 언어들을 지원한다.
-http://www.unicode.org/index.html 에서 Unicode표준에 대해 자세히 배울수 있다.
-몇몇 text editors는 Unicode text entry를 일반적으로 지원한다
-Unicode character는 ASCII에서 나타내는 것은 불가능한데 ö같은 문자들을 \uXXXX형식의 escape sequence로 표현되기 때문이다. 각각의 X는 16진수 escape sequence다.
-전세계의 systems마다 character encoding들이 다양하게 사용된다.
-가장 일반적으로 사용되기 적합한 encoding이 Unicode다. 프로그램이 Unicode안의 characters를 기대하고 text data가 반드시 Unicode로 변환된 system으로 부터 얻고 반대로도 할 수 있다.
-JVM의 default file encoding과 일치하면 text files의 data는 자동으로 Unicode로 변환된다
-OutputStreamWirter를 사용해 default encoding을 식별할 수 있다.
-default encoding이 원하는 encoding처리방식과 다르다면 반드시 직접 변환을 수행해야 한다.
-다른 나라/platform에서 text를 처리할 때 변환작업이 필요할 수 있다.
-
-Byte Encodings and Strings
-non-Unicode를 Unicode로 변환하기 위한 2가지 기법이다.
-non-unicode byte array를 String object에 넣을 수 있다. 반대로도 된다. 혹은 Unicode characters의 stream과 non-Unicode text byte stream간 변환할 수 있다.
-
-byte array에 non-Unicode text를 담고 있다면 String constructor method로 Unicode text로 변환할 수 있다. 
-String object에 집어넣은 non-Unicode characters를 getBytes method로 변환할 수 있다.
-getBytes method의 parameter로 encoding identifier를 지정한다.
-Input/Output Stream object를 만들 때 원하는 byte encoding을 정할 수 있다.
-encoding identifier 를 생략하면 default encoding으로 읽는다.
-어떤 encoding으로 사용해야 하는지 결정하려면 InputStreamReader object에 getEncoding()method를 호출하여 encoding identifier를 확인한다.
-
-Normalizer's API***
-정규화는 조화될 수 있게 만드는 text의 정확한 변형을 수행할 수 에 의해 처리한다.
-정규화될 수 있는 것은 무엇일까 정규화는 구별자로 characters의 변환이 필요할 때 적용할 수 있고 전체 letters case를 바꾸고, 조합된 것을 분해하고, half width katakana characters를 full width katakana로 변환한다.
-Normalizer's API는 java.text.Normalizer.Form에서 4가지 Unicode text 정규화 forms을 따르는 것을 모두 지원한다.
-NFC - Normalization Form Composition (정규화 형태 조합)
-NFD - Normalization Form Decomposition (정규화 형태 분해)
-NFKC - Normalization Form Canonical Composition (정규화 형태 표준 조합)
-NFKD - Normalization Form Canonical Decomposition (정규화 형태 표준 분해)
-latin small letter "o" 를 어떻게 normalization forms를 사용해 정규화되게 만들 수 있는지 
+코드 점	문자	UTF-16 코드 값	글리프
+122 (hex 7A)	소문자 Z(로마자)	007A	z
+27700 (hex 6C34)	물 수(한자)	6C34	水
+119070 (hex 1D11E)	높은음자리표	D834 DD1E	𝄞()
+水z𝄞〔UTF-16로 인코드된 물 수, z, 높은음자리표()〕
+인코딩	바이트 순서	바이트 열
+UTF-16LE	리틀 엔디언	34 6C, 7A 00, 34 D8 1E DD
+UTF-16BE	빅 엔디언	6C 34, 00 7A, D8 34 DD 1E
+UTF-16	리틀 엔디언, with BOM	FF FE, 34 6C, 7A 00, 34 D8 1E DD
+UTF-16	빅 엔디언, with BOM	FE FF, 6C 34, 00 7A, D8 34 DD 1E
 
 
-Original word	NFC	NFD	NFKC	NFKD
-"schön"	"schön"	"scho\u0308n"	"schön"	"scho\u0308n"
-표를 보고 알 수 있듯이 원본 단어는 NFC와 NFKC에서 바뀌지않고 남아있다.
-NFD와 NFKD 조합 characters는 그것들의 표준 분해로 mapped된다. 그러나 
+보리고래
+위키백과 ― 우리 모두의 백과사전.
 
-half-width와 full-width katakana characters는 비슷하게 호환되는 분해와 
-이렇다 하더라도 표준적으로 동등하지 않다
+보리고래[1]
+
+해수면에서 먹이를 집어삼키는 보리고래
+멸종위기등급
+
+멸종위기등급: 위기(endangered)
+[2]
+생물 분류
+계:	동물계
+문:	척삭동물문
+강:	포유강
+목:	고래목
+아목:	수염고래아목
+과:	수염고랫과
+속:	대왕고래속
+종:	보리고래
+학명
+Balaenoptera borealis
+Lesson,1828
+아종
+Balaenoptera borealis borealis
+Balaenoptera borealis schleglii
+
+보래고래의 분포도
+
+사람과의 크기 비교
+보리고래(학명: balaenoptera borealis)는 수염고래의 한 종류이며 대왕고래와 큰고래에 이어 3번째로 큰 고래이다.[3] 일어명을 직역해 멸치고래또는 정어리고래라고도 한다. 전 세계의 대양과 인접한 바다에 발견되지만 주로 수심이 깊은 곳을 선호한다.[4] 극지방, 열대지방, 내해지방에서는 잘 발견되지 않는다. 보리고래는 해마다 차가운 지방에서 온대지방이나 아열대지방으로 이동하지만, 이동경로는 대부분이 알려진 바가 없다.[5]
+보리고래의 몸길이는 최대 20m이며 몸무게는 최대 45t이다.[5] 일일당 먹이 섭취량은 평균 900kg에 달하며 주식은 크릴새우, 동물성 플랑크톤 등이다.[6] 고래 중에서 가장 빠른 편에 속하는데, 단거리에서는 최대 이동속도 50km/시까지 이를 수 있다.[6] ‘보리고래’라는 이름은 이 고래가 보리가 익는 시기에 나타난다고 붙은 이름이라고 한다.[1] 영어를 포함한 많은 유럽권 언어에서 보리고래의 이름에 ‘sei’라는 말이 붙는데, 이는 노르웨이어로 대구를 부르는 말로, 이들이 해마다 같은 때에 함께 나타난다고 해서 붙은 이름이다.[7]
+19세기 후반에서 20세기 후반까지 진행된 대규모 고래잡이에서 238,000마리가 포획되었으며,[8] 현재는 국제적으로 보호를 받고 있는 종이지만,[2] 명목상 연구 목적으로 아이슬란드와 일본에 의해 소량의 개체가 포획되고는 한다.[9] 2006년의 개체수 추산치는 54,000마리로 대규모 포경 전 개체수의 20% 수준이다.[7]
+목차 [숨기기]
+1 분류
+2 외관과 행동 방식
+2.1 먹이
+2.2 생애
+2.3 노래
+3 서식지와 회유 경로
+4 고래잡이
+4.1 북대서양
+4.2 북태평양
+4.3 남반구
+4.4 국제적 보호 조치
+4.5 현재 포획 상황
+5 개체수 측정
+6 주석
+6.1 일반 자료
+분류 [편집]
+
+
+
+보리고래와 다른 수염고래와의 관계를 나타내는 그림 (빨간색이 보리고래)
+르네프림베르 레송에 의해서 1828년에 설명되었지만 추가 설명은 칼 루돌피에 의해 추가되었으며 이에 따라 루돌피수염고래라고 불리기도 하였다.
+영문 이름 부분 중 sei는 대구를 뜻하며, 둘이 플랑크톤을 먹을 때 같이 나타난다고 붙은 이름이다.[7] 아시아의 일본에서는 정어리와 같이 나타난다고 하여 ‘이와시 쿠지라’(직역하면 정어리고래)라고 일컬어지며,[10] 이는 한국어로 번역되어 종종 쓰이기도 한다. 보리고래라는 이름은 울산지역에서 보리를 수확할 즈음에 나타난다고 붙은 이름이다.[1]
+보리고래는 수염고래이며, 이는 흑고래, 대왕고래, 브라이드 고래, 큰고래, 그리고 쇠정어리고래를 포함한다. 수염고래는 공통적으로 목주름과 수염이 있다. 수염고래들은 수염고래아목의 다른 종과 중신세에 들어 갈라선 것으로 여겨진다.[11]
+두 가지의 아종이 확인되었다. 하나는 북방보리고래(Balaenoptera borealis borealis)이며, 다른 하나는 남방보리고래이다(Balaenoptera borealis schleglii).[12] 이 두가지 아종은 고립되어 있으며, 서로 어울리는 일은 없다.
+외관과 행동 방식 [편집]
+
+보리고래는 대왕고래, 큰고래에 이어 3번째로 큰 대왕고래속의 종이다.[3] 성숙한 개체의 몸길이는 12에서 15m이며,[6] 몸무게는 20에서 30t 정도이다. 남방아종이 북방아종보다 큰 편이며 또한 수컷보다 암컷이 큰 편이다.[5] 가장 큰 보리고래는 20m였으며[6] 몸무게는 40에서 45t 사이였다. 가장 큰 보리고래는 아이슬란드에서 포획된 것으로 몸길이 16미터였다.[13] 갓 태어난 새끼의 몸길이는 4에서 5미터 정도이다.[6]
+이들의 몸색깔은 어두운 쇠색이며 복부분에는 불규칙적인 연회색에서 흰색의 점이 있다. 목에는 32에서 60개의 주름이 있으며, 이는 먹이를 먹을 때 입이 팽창하도록 도와주는 역할을 한다. 주둥이는 뾰족한 편이며 가슴지느러미는 다른 고래에 비해 짧고 뾰족한 편으로, 몸길이의 9-10% 정도밖에 되지 않는다.[7] 주둥이의 끝에서 숨구멍까지 줄이 그어져 있으며, 이는 수염고래들의 공통적인 특징이다.
+이들의 피부는 구멍이나 상처가 있을 수도 있으며, 치유된 후에는 희게 변한다. 이는 요각류,[14], 칠성장어,[15] 심지어는 작은 상어[16] 같은 기생체에 의한 것이다. 주둥이에서 끝의 2/3 정도 위치에 있는 등지느러미는 낫과 같은 모양이며 높이는 25에서 61센티미터 정도이다. 보리고래 각 개체를 확인하는 데에는 등지느러미모양, 몸색깔, 흉터들이 쓰이고 있다.[17] 꼬리는 두꺼우며, 꼬리지느러미는 몸크기에 비해서 작은 편이다.[7]
+
+
+고래수염을 자세히 본 것. 플랑크톤과 같은 작은 먹이를 걸러내는 데에 쓰인다.
+이 수염고래는 먹이를 걸러 먹는 종이며, 많은 양의 바닷물의 머금어 고래수염을 이용해 먹이를 걸러내고 바닷물은 뺀다. 성체는 양쪽에 각각 300에서 380개의 수염판이 있으며, 각 길이는 48센티미터 정도이다. 수염판은 끝에서 고운 털로 자라나 혀에 이르는 손톱과 같은 케라틴질로 이루어져 있다.[6] 보리고래의 0.1밀리미터정도의 아주 고운 강모는 이들을 다른 수염고래로부터 구별할 수 있는 특징이기도 하다.[18]
+보리고래는 다른 대형 수염고래와 비슷하게 생겼다. 수염을 보지 않고 브라이드고래와 구분할 때는 머리의 등줄기의 유무 여부가 사용된다 (보리고래는 없다). 큰 보리고래는 큰고래와 혼동될 수도 있다. 하지만 큰고래의 특징인 비대칭적 머리 채색과 흰 밑턱, 회색인 왼쪽로 구분될 수 있다. 옆에서 보면 보리고래의 머리에는 주둥이와 눈 사이에 작은 아치 모양이 있으며, 큰고래의 경우는 대체로 평평하다.[5]
+보리고래는 대체로 혼자서 다니지만,[19] 6마리씩 무리를 지어다니기도 한다.[17] 이보다 더 큰 무리는 먹이가 풍부한 지역에서 발생한다. 이들의 사회구조에 대해서 알려진 것은 거의 없다. 수컷과 암컷은 유대감을 형성하기도 하지만, 이를 확증하는 연구는 부족한 편이다.[3][20]
+보리고래는 고래 중 가장 빠른 편이다. 최대속도는 단거리에서 50킬로미터/시에 이른다.[6] 이에 반해 오래 잠수할 수 있는 편은 아니며, 얕은 바다에 5분에서 15분 가량 머무는 데에 그친다. 수면에 몇 분 동안 머물러 있을 때 잔잔하고 깨끗한 바다에서 보이며 40초마다 한 번씩 고래분수를 뿜기도 한다. 큰고래와 달리 보리고래는 잠수시에 몸을 높게 들어올리지는 않는다. 숨구멍과 등지느러미는 수면에 동시에 노출되어 있다. 보리고래는 수면에 꼬리를 거의 드러내지 않으며, 고래뛰기를 하지도 않는다.[5]
+먹이 [편집]
+
+
+보리고래의 주식인 크릴무리의 사진 — 새우같이 생겼다.
+보리고래는 해수면 가까이서 먹이를 먹으며, 먹이가 모여 있는 곳에 몸을 기울여 이들을 하루에 평균 900킬로그램정도의 먹이를 잡는다.[6] 육중한 무게와 크기에도 불구하고 이들의 먹이인 동물성플랑크톤과 작은 물고기가 주로 먹이사슬의 하위단계에 있는 것은 주목할 만할 일이다. 이들이 동물성플랑크톤을 선호하는 것은 내장의 내용물 분석결과와 먹이를 머금는 장면의 관찰로 인해 밝혀졌다.[21][22] 주식은 보리고래의 옅은 갈색 구름과 같은 변을 채집함에 따라서도 밝혀졌다. 망에 변을 모아 수중에 있는 유전물질과 분리해 알려져 있는 종의 것들과 비교되었다.[23] 보리고래는 정어리류, 돌묵상어, 참고래와 먹이를 놓고 경쟁하는 것으로 나타났다.
+북대서양 보리고래의 주식은 Calanus finmarchicus라는 종의 동물성플랑크톤이며, 크릴은 제2의 식단이다.[24][25] 북태평양 보리고래의 식단도 이와 비슷하며, 먹이가 되는 플랑크톤은 Calanus cristatus, Calanus plumchrus, Calanus pacificus, Euphausia pacifica, Thysanoessa inermis, Thysanoessa longipes, Thysanoessa spinifera 등이다. 이에 더해서 오징어 같이 플랑크톤보다 더 큰 종을 먹기도 한다.[26] 또한 멸치나 고등어를 먹기도 한다.[24][27] 보리고래가 먹는 몇몇 어류종은 상업적으로 중요한 어획종이다. 중부 캘리포니아에서 이들이 6월과 8월 사이에는 안초비, 9월과 10월 사이에는 크릴을 먹는 것이 확인되었다.[15] 남반구에서 이들이 먹는 종은 Calanus tonsus, Calanus simillimus, Drepanopus pectinatus, Euphausia superba, Euphausia vallentini 등이다.[24]
+생애 [편집]
+짝짓기는 온대, 아열대지방에서 겨울에 하며, 추정 임신기간은 10 3/4개월,[28] 11 1/4 개월,[29] 1년,[30] 으로 다양하며, 이러한 차이는 태아의 성장을 측정할 때 사용되는 다양한 모형 때문이다. 임신기간 추정치의 다양함은 이들의 임신기간 동안 관찰을 계속할 수 없다는 것도 한몫 한다. 그래서 보리고래를 비롯한 수염고래의 임신기간에 대한 자료는 상업적 고래잡이 업자들에게서 나온다. 이러한 자료를 바탕으로 연구자들은 여러 태아의 크기와 특징을 갓 태어난 새끼와 비교해 수태기를 측정하려고 한다.
+갓 태어난 새끼는 몸길이 11-12미터로 태어난 후 6-9개월 후 젖을 떼며,[28] 따라서 젖떼기는 북방지에서 여름이나 가을에 일어난다. 암컷은 2년 또는 3년마다 한 번씩 번식하며,[28] 동시에 6마리까지 낳은 경우도 있지만, 보통은 한 번에 1마리만을 출산한다.[6] 성적으로 성숙하기까지는 8에서 10년이 걸리며,[28] 성장 완료 후 수컷의 몸길이는 12미터이며, 암컷의 경우는 13미터이다.[7] 보리고래의 최대수명은 65년이다.[31]
+노래 [편집]
+ 이 부분의 본문은 고래의 노래입니다.
+다른 고래들처럼 보리고래 또한 길고, 음량이 큰 주파수의 낮은 소리를 내는 것으로 알려져있다. 이들이 사용하는 신호는 상대적으로 알려진 바가 거의 없지만, 2003년에 남극반도에서 보리고래가 만든 "짖는 소리", "휙 소리"같은 신호가 관측된 바가 있다.[32] 많은 신호는 각 부분 사이에 주파수가 달랐다. 이러한 조합은 보리고래의 신호를 다른 고래의 것에서부터 구분할 수 있는 특징이다. 대부분의 신호는 0.5초 동안 지속되며, 주파수는 인간이 대부분 들을 수 있는 240-635HZ였다. 기록된 것들 중 가장 큰 음향을 지닌 것은 1미터 거리에서 156dB로 측정되었다.[32]
+서식지와 회유 경로 [편집]
+
+
+
+2001년 9월 17일에 발행된 페로산 우표에 그려져 있는 보리고래
+보리고래는 전 세계의 대양에서 서식하지만, 극지방과 열대 바다에서는 잘 발견되지 않는다.[5] 보리고래를 브라이드 고래나 가끔 큰고래와 혼동하는 사태가 많음에 따라 이들의 분포 범위와 개체수 측정에 혼란을 주기도 하였다.
+북대서양에서 보리고래는 동부에서는 남유럽에서 노르웨이까지, 서부에서는 남부미국에서 그린란드까지 서식한다.[4] 확증된 가장 남한계 기록은 멕시코 만 북부와 안틸레스 제도였다.[18] 이들은 멕시코 만, 세인트로렌스 만, 허드슨 만, 북해, 지중해 등 육지에 둘러싸인 바다는 피하는 경향이 있다.[5] 보리고래는 깊은 바다에 주로 살며, 대륙붕 사면[33] 해저분지,[34] 또는 해저계곡과 같은 지역에서 발견된다.[35]
+북태평양에서 보리고래는 겨울에는 북위 20-23도의 바다에 사며, 여름에는 35-50도의 지역에 서식한다.[36] 대략 전체 북태평양보리고래 75%가량은 날짜변경선의 동쪽에 살지만,[8] 북태평양에서 전반적인 분포에 대한 자료는 부족하다. 캘리포니아에서 추적장치를 부착한 두 개체는 나중에 워싱턴 주와 브리티시 컬럼비아에서 발견되었다.[37] 남반구에서는 과거의 포획 기록을 보아 하계 서식지역은 남위 40-50도로 추정되지만, 겨울의 서식지는 알려져 있지 않다.[24]
+대개 보리고래는 여름은 한대 및 극지방 인근 지역에서 보내고, 여름에는 먹이가 풍부한 온대및 아열대지방으로 이동한다.[5] 대서양 북서지역에서 관찰및 포획 기록은 이 지역의 보리고래가 북쪽을 따라 조지스 해구, 메인 만에 6월 말에 도착하는 것으로 알려져 있다. 뉴펀들랜드의 남해안에서는 8월에서 9월까지 목격되며, 남방지역으로의 회유는 9월 중순에서 11월 중순에 노바스코샤를 따라 시작된다. 래브라도 해에 6월 첫째 주에 도착한 개체는 그린란드를 향해 더 북쪽으로 가기도 한다.[38] 대서양 북동 지역에서 보리고래는 서아프리카에서 여름을 보내며, 봄에는 대륙붕을 따라 북상을 시작한다. 큰 암컷이 북상을 이끄며 덴마크 해협에 수컷이나 작은 개체보다 더 빠르게 도착하며, 그 지역에 7월 중순에서 9월 중순까지 남아 있다. 어떠한 해에는 수컷이나 어린 개체는 여름에 저위도지방에 남아 있기도 하였다.[13]
+이들의 회유 방식에 대해 어느 정도 알려지기는 하였지만, 정확한 회유 경로는 알려진 바가 없으며,[13] 과학자들은 해마다 무리가 어디가 나타날지 정확하게 예측할 수 없다. 어떠한 위치에서는 한 해는 개체수가 많다가 다른 몇 년 동안은 단 한 마리도 나타나지 않기도 한다.[39] F.O.카펠은 그린란드 서쪽에서 나타나는 보리고래와 따뜻한 북대서양해류와의 관계를 주목하였다.[40] 여러 개체에 추적 장치를 부착한 결과 이들은 해마다 아이슬란드에 돌아오는 것으로 밝혀졌다.[41]
+고래잡이 [편집]
+
+ 이 부분의 본문은 고래잡이입니다.
+ 이 부분의 본문은 고래잡이의 역사입니다.
+
+
+고래작살
+폭발하는 고래작살과 19세기에 이르러서 증기선이 발명되자 상업적 고래잡이 업자들이 이전에는 잡고 회수하기 어려웠던 대형 고래들을 잡을 수 있게 되었다. 이들의 빠른 속도와 민첩함,[42] 상대적으로 적은 고래 기름과 고기 때문에 초기에는 널리 선호되지 않았다. 상업적 고래잡이 업자들이 선호하던 참고래, 대왕고래, 큰고래, 혹고래들이 고갈되자 특히 1950년대에서 1970년대까지 보리고래가 대신 포획되기 시작하였다.[3]
+북대서양 [편집]
+북대서양에서는 1885년과 1984년 사이에는 보리고래 14,295마리가 잡혔다.[8] 19세기 말과 20세기 초에 노르웨이와 스코틀랜드 연안에서 잡히기 시작했으며[39] 1885년 한 해만 핀마크에서 700마리 이상이 처리되었다.[43] 보리고래 고기는 당시 노르웨이에서 인기 있었지만, 20세기 초기에는 포획량이 많지 않아 경제성이 낮았다.[44]
+아이슬란드의 한 처리장에서는 1948년과 1985년 사이에 고래 2,574마리가 처리되었다. 1960년대와 1970년대에 보리고래는 아이슬란드 고래잡이 업자들이 큰고래에 이어 가장 많이 잡던 종이었으며, 고래기름보다 고기가 더 중요시 되자 이러한 추세는 더욱 강화되었다.[42]
+1920년대에는 이베리아 반도에서 스페인 출신 고래잡이 업자들에 인해 보리고래 몇 마리가 잡히기도 하였으며,[45] 1960년대와 1970년대에는 캐나다의 고래잡이 업자들이 노바스코샤에서 포획하기도 하였다.[38] 서부 그린란드에서는 1920년대와 1950년대 사이에 노르웨이와 덴마크 고래잡이 업자들이 이 지역에서 보리고래를 포획하기도 하였다.[40]
+북태평양 [편집]
+1910년과 1975년 사이에 북태평양에서 포획된 보리고래는 72,215마리에 달하며,[8] 대부분은 1947년이후에 잡힌 것들이다.[46] 한국과 일본에 있던 해체장에서는 1911년과 1955년 사이에 연간 보리고래 300-600마리가 처리되었다. 1959년에 일본은 최대 포획량인 1,340마리를 달성했다. 1960년대 초를 시작으로 북태평양 대양에 있는 개체를 남획하기 시작했으며, 1963년과 1974년사이의 연간 평균 포획량은 3,643마리에 달했다 (총 포획량은 43,719마리였다).[47] 남획이 시작된 후 1971년에 이르러 일본 연안에서는 보리고래가 희귀해져 서북태평양에서 상업적 고래잡이는 1975년에 중지되었다.[48][24]
+북아메리카 해안에서는 1950년대부터 1960년대까지 브리티시 컬럼비아 해안에서 잡혔으며, 말기에 연간 포획량이 14마리로 감소하자 고래잡이가 중지되었다.[3] 1962년과 1967년사이에 브리티시 컬럼비아에서 잡힌 보리고래는 2,000마리 이상이다.[49] 1957년과 1971년 사이에 캘리포니아의 처리장은 386마리를 처리했다.[15] 동북태평양에서 보리고래에 대한 상업적 포획은 1971년에 중지되었다.
+남반구 [편집]
+남반구에서 1910년과 1979년 사이에 포획된 보리고래는 152,233마리에 달한다.[8] 남극해에 이루어진 고래잡이업자들은 처음에는 흑고래를 노렸다. 1913년에 이르러 흑고래가 잘 잡히지 않게 되었으며, 큰고래와 대왕고래의 포획량이 증가하기 시작하였다. 이들 또한 잘 잡히지 않게 되어 1950년대와 1960년대에 이르러 보리고래의 포획량이 급상승하였다.[24] 1964년에 잡힌 보리고래는 20,000마리였지만, 1976년에 잡힌 수는 2,000마리 이하로 급감하였으며 이에 따라 이들에 대한 상업적 고래잡이는 1977년에 종료되었다.[3]
+국제적 보호 조치 [편집]
+
+
+국제포경위원회 가입국 (푸른색)
+보리고래에 대한 국제적 보호 조치는 북태평양 개체군에 대한 연간 포획량 제한이 국제포경위원회에 의해 정해진 1970년까지 마련되지 못했다. 연간 포획량이 정해지기 전까지는 고래잡이 업자들이 보리고래를 찾는 즉시 잡아도 하자가 없었다.[50] 북태평양에서 보리고래는 1976년 이래로 완전히 보호되기 시작하였으며, 북대서양에서는 1977년 이래로 포획 분량이 정해졌다. 남반구 개체군에 대한 포획은 1979년 이래로 금지되었다. 다른 고래들이 멸종위기를 맞고 있다는 총의 하에 국제포경위원회는 1986년에 국제적으로 상업적 고래잡이를 중지하기로 결의하였다.[5]
+1970년대 말에는 동부 북대서양에서 불법으로 보리고래가 잡히기도 하였다.[51] 북태평양에서 보리고래가 불법적으로 잡혔다는 흔적은 거의 없지만, 소련이 포획량을 과소 보고한 적은 있으며,[52] 이에 따라 실제 포획량은 이보다 많을 수도 있다.
+국제자연보호연맹의 레드리스트에 보리고래는 멸종위기종으로 올라 있다.[2] 북반구 개체군은 국제 야생동식물 멸종위기종 거래에 관한 조약의 부속서 II에 올라와 있다. 남반구 개체군은 이보다 더 심해 부속서 I에 올라와 있으며, 이는 이들에 대한 무역이 중지되지 않으면 남반구에서 보리고래는 멸종의 도가니에 빠진다는 것을 의미한다.[6]
+현재 포획 상황 [편집]
+국제포경위원회가 상업적 고래잡이 중지를 선언한 이후 아이슬란드와 일본의 고래잡이 업자에 의해 소수의 보리고래가 "연구목적"의 고래잡이라는 명분으로 잡혔다. 아이슬란드는 1986년과 1989년사이에 연구목적의 고래잡이를 실시해 연간 40마리를 잡았다.[53]
+일본의 고래잡이 업자들은 같은 목적으로 연간 보리고래 50마리를 잡는다. 연구는 도쿄에 있는 민간단체인 고래연구기관에 의해 이루어진다. 연구의 목적은 보리고래가 무엇을 먹는가를 알아내 고래와 어부들이 얼마나 경쟁을 하는 가를 알아보는 데에 있다. 기관의 관계자인 오스미 세이지는 "고래는 인간이 잡는 수산자원의 3에서 5배를 소비하며, 고래 연구는 해양자원 관리에 필요한 중요한 자료를 제공한다" 라고 하였다.[54] 그는 이후에 "서북태평양에서 보리고래는 2번째로 풍부한 종이며, 28,000마리 이상이 있다. 그들은 확실히 멸종 위기에 놓여 있지 않다"라고 덧붙여 말했다.[55]
+세계 자연보호 기금같은 환경단체는 고래는 인간이 먹지 않는 오징어나 플랑크톤을 먹는다며 이러한 연구를 비판했다. 그들은 또한 연구를 "고래잡이 어선을 돌아가게 하는 원동력, 그이상 그 이하도 아니며, 고래가 인간의 죄를 대신 뒤집어 쓰고 있다" 라고 하였다.[9] 연구의 과학적 의의는 아주 낮다고 비판받아 왔으며, 2001년 국제포경위원회 총의에서 과학자 32명은 일본의 연구목적 고래잡이는 과학적 측면이 부족하고 학술심사의 최소 기준에도 못미치는 면을 지적하였다.[56]
+개체수 측정 [편집]
+
+현재 전 세계에 있는 보리고래의 숫자는 54,000마리로, 상업적 고래잡이 개시 이전의 20% 수준이다.[7] 북대서양에서 1991년에 이루어진 측정에 의하면 이 지역의 개체수는 4,000마리 였다.[57] 이 측정법은 고래를 찾는데 필요한 시간과 노력을 이용한 것이다. 이는 과학계에서 비판을 받고 있는 방법이며, 정확한 측정방법으로 여겨지지 않는다.[58] 노르웨이 북부에서 1960년대와 1970년대에는 드물었다고 하지만, 19세기 말에서 제2차 세계대전까지 많이 포획되었다.[59] 이러한 급감은 남획,[59] 보리고래의 주식인 요각류의 숫자 감소가 분포 범위에 영향을 주었다는 설[60] 등 다양하다. 덴마크 해협에서 1987년 이루어진 조사에 의하면 1,290마리가 있었으며, 1989년에는 1,590마리가 있었다.[60] 노바스코샤인근의 개체수는 1,393마리에서 2,248마리로 추산되며, 더 적게는 870마리로 추정되기도 한다.[38]
+
+U+	0	1	2	3	4	5	6	7	8	9	A	B	C	D	E	F
+20000	𠀀	𠀁	𠀂	𠀃	𠀄	𠀅	𠀆	𠀇	𠀈	𠀉	𠀊	𠀋	𠀌	𠀍	𠀎	𠀏
+20010	𠀐	𠀑	𠀒	𠀓	𠀔	𠀕	𠀖	𠀗	𠀘	𠀙	𠀚	𠀛	𠀜	𠀝	𠀞	𠀟
+20020	𠀠	𠀡	𠀢	𠀣	𠀤	𠀥	𠀦	𠀧	𠀨	𠀩	𠀪	𠀫	𠀬	𠀭	𠀮	𠀯
+20030	𠀰	𠀱	𠀲	𠀳	𠀴	𠀵	𠀶	𠀷	𠀸	𠀹	𠀺	𠀻	𠀼	𠀽	𠀾	𠀿
+20040	𠁀	𠁁	𠁂	𠁃	𠁄	𠁅	𠁆	𠁇	𠁈	𠁉	𠁊	𠁋	𠁌	𠁍	𠁎	𠁏
+20050	𠁐	𠁑	𠁒	𠁓	𠁔	𠁕	𠁖	𠁗	𠁘	𠁙	𠁚	𠁛	𠁜	𠁝	𠁞	𠁟
+20060	𠁠	𠁡	𠁢	𠁣	𠁤	𠁥	𠁦	𠁧	𠁨	𠁩	𠁪	𠁫	𠁬	𠁭	𠁮	𠁯
+20070	𠁰	𠁱	𠁲	𠁳	𠁴	𠁵	𠁶	𠁷	𠁸	𠁹	𠁺	𠁻	𠁼	𠁽	𠁾	𠁿
+20080	𠂀	𠂁	𠂂	𠂃	𠂄	𠂅	𠂆	𠂇	𠂈	𠂉	𠂊	𠂋	𠂌	𠂍	𠂎	𠂏
+20090	𠂐	𠂑	𠂒	𠂓	𠂔	𠂕	𠂖	𠂗	𠂘	𠂙	𠂚	𠂛	𠂜	𠂝	𠂞	𠂟
+200A0	𠂠	𠂡	𠂢	𠂣	𠂤	𠂥	𠂦	𠂧	𠂨	𠂩	𠂪	𠂫	𠂬	𠂭	𠂮	𠂯
+200B0	𠂰	𠂱	𠂲	𠂳	𠂴	𠂵	𠂶	𠂷	𠂸	𠂹	𠂺	𠂻	𠂼	𠂽	𠂾	𠂿
+200C0	𠃀	𠃁	𠃂	𠃃	𠃄	𠃅	𠃆	𠃇	𠃈	𠃉	𠃊	𠃋	𠃌	𠃍	𠃎	𠃏
+200D0	𠃐	𠃑	𠃒	𠃓	𠃔	𠃕	𠃖	𠃗	𠃘	𠃙	𠃚	𠃛	𠃜	𠃝	𠃞	𠃟
+200E0	𠃠	𠃡	𠃢	𠃣	𠃤	𠃥	𠃦	𠃧	𠃨	𠃩	𠃪	𠃫	𠃬	𠃭	𠃮	𠃯
+200F0	𠃰	𠃱	𠃲	𠃳	𠃴	𠃵	𠃶	𠃷	𠃸	𠃹	𠃺	𠃻	𠃼	𠃽	𠃾	𠃿
+U+	0	1	2	3	4	5	6	7	8	9	A	B	C	D	E	F
+20100	𠄀	𠄁	𠄂	𠄃	𠄄	𠄅	𠄆	𠄇	𠄈	𠄉	𠄊	𠄋	𠄌	𠄍	𠄎	𠄏
+20110	𠄐	𠄑	𠄒	𠄓	𠄔	𠄕	𠄖	𠄗	𠄘	𠄙	𠄚	𠄛	𠄜	𠄝	𠄞	𠄟
+20120	𠄠	𠄡	𠄢	𠄣	𠄤	𠄥	𠄦	𠄧	𠄨	𠄩	𠄪	𠄫	𠄬	𠄭	𠄮	𠄯
+20130	𠄰	𠄱	𠄲	𠄳	𠄴	𠄵	𠄶	𠄷	𠄸	𠄹	𠄺	𠄻	𠄼	𠄽	𠄾	𠄿
+20140	𠅀	𠅁	𠅂	𠅃	𠅄	𠅅	𠅆	𠅇	𠅈	𠅉	𠅊	𠅋	𠅌	𠅍	𠅎	𠅏
+20150	𠅐	𠅑	𠅒	𠅓	𠅔	𠅕	𠅖	𠅗	𠅘	𠅙	𠅚	𠅛	𠅜	𠅝	𠅞	𠅟
+20160	𠅠	𠅡	𠅢	𠅣	𠅤	𠅥	𠅦	𠅧	𠅨	𠅩	𠅪	𠅫	𠅬	𠅭	𠅮	𠅯
+20170	𠅰	𠅱	𠅲	𠅳	𠅴	𠅵	𠅶	𠅷	𠅸	𠅹	𠅺	𠅻	𠅼	𠅽	𠅾	𠅿
+20180	𠆀	𠆁	𠆂	𠆃	𠆄	𠆅	𠆆	𠆇	𠆈	𠆉	𠆊	𠆋	𠆌	𠆍	𠆎	𠆏
+20190	𠆐	𠆑	𠆒	𠆓	𠆔	𠆕	𠆖	𠆗	𠆘	𠆙	𠆚	𠆛	𠆜	𠆝	𠆞	𠆟
+201A0	𠆠	𠆡	𠆢	𠆣	𠆤	𠆥	𠆦	𠆧	𠆨	𠆩	𠆪	𠆫	𠆬	𠆭	𠆮	𠆯
+201B0	𠆰	𠆱	𠆲	𠆳	𠆴	𠆵	𠆶	𠆷	𠆸	𠆹	𠆺	𠆻	𠆼	𠆽	𠆾	𠆿
+201C0	𠇀	𠇁	𠇂	𠇃	𠇄	𠇅	𠇆	𠇇	𠇈	𠇉	𠇊	𠇋	𠇌	𠇍	𠇎	𠇏
+201D0	𠇐	𠇑	𠇒	𠇓	𠇔	𠇕	𠇖	𠇗	𠇘	𠇙	𠇚	𠇛	𠇜	𠇝	𠇞	𠇟
+201E0	𠇠	𠇡	𠇢	𠇣	𠇤	𠇥	𠇦	𠇧	𠇨	𠇩	𠇪	𠇫	𠇬	𠇭	𠇮	𠇯
+201F0	𠇰	𠇱	𠇲	𠇳	𠇴	𠇵	𠇶	𠇷	𠇸	𠇹	𠇺	𠇻	𠇼	𠇽	𠇾	𠇿
+U+	0	1	2	3	4	5	6	7	8	9	A	B	C	D	E	F
+20200	𠈀	𠈁	𠈂	𠈃	𠈄	𠈅	𠈆	𠈇	𠈈	𠈉	𠈊	𠈋	𠈌	𠈍	𠈎	𠈏
+20210	𠈐	𠈑	𠈒	𠈓	𠈔	𠈕	𠈖	𠈗	𠈘	𠈙	𠈚	𠈛	𠈜	𠈝	𠈞	𠈟
+20220	𠈠	𠈡	𠈢	𠈣	𠈤	𠈥	𠈦	𠈧	𠈨	𠈩	𠈪	𠈫	𠈬	𠈭	𠈮	𠈯
+20230	𠈰	𠈱	𠈲	𠈳	𠈴	𠈵	𠈶	𠈷	𠈸	𠈹	𠈺	𠈻	𠈼	𠈽	𠈾	𠈿
+20240	𠉀	𠉁	𠉂	𠉃	𠉄	𠉅	𠉆	𠉇	𠉈	𠉉	𠉊	𠉋	𠉌	𠉍	𠉎	𠉏
+20250	𠉐	𠉑	𠉒	𠉓	𠉔	𠉕	𠉖	𠉗	𠉘	𠉙	𠉚	𠉛	𠉜	𠉝	𠉞	𠉟
+20260	𠉠	𠉡	𠉢	𠉣	𠉤	𠉥	𠉦	𠉧	𠉨	𠉩	𠉪	𠉫	𠉬	𠉭	𠉮	𠉯
+20270	𠉰	𠉱	𠉲	𠉳	𠉴	𠉵	𠉶	𠉷	𠉸	𠉹	𠉺	𠉻	𠉼	𠉽	𠉾	𠉿
+20280	𠊀	𠊁	𠊂	𠊃	𠊄	𠊅	𠊆	𠊇	𠊈	𠊉	𠊊	𠊋	𠊌	𠊍	𠊎	𠊏
+20290	𠊐	𠊑	𠊒	𠊓	𠊔	𠊕	𠊖	𠊗	𠊘	𠊙	𠊚	𠊛	𠊜	𠊝	𠊞	𠊟
+202A0	𠊠	𠊡	𠊢	𠊣	𠊤	𠊥	𠊦	𠊧	𠊨	𠊩	𠊪	𠊫	𠊬	𠊭	𠊮	𠊯
+202B0	𠊰	𠊱	𠊲	𠊳	𠊴	𠊵	𠊶	𠊷	𠊸	𠊹	𠊺	𠊻	𠊼	𠊽	𠊾	𠊿
+202C0	𠋀	𠋁	𠋂	𠋃	𠋄	𠋅	𠋆	𠋇	𠋈	𠋉	𠋊	𠋋	𠋌	𠋍	𠋎	𠋏
+202D0	𠋐	𠋑	𠋒	𠋓	𠋔	𠋕	𠋖	𠋗	𠋘	𠋙	𠋚	𠋛	𠋜	𠋝	𠋞	𠋟
+202E0	𠋠	𠋡	𠋢	𠋣	𠋤	𠋥	𠋦	𠋧	𠋨	𠋩	𠋪	𠋫	𠋬	𠋭	𠋮	𠋯
+202F0	𠋰	𠋱	𠋲	𠋳	𠋴	𠋵	𠋶	𠋷	𠋸	𠋹	𠋺	𠋻	𠋼	𠋽	𠋾	𠋿
+U+	0	1	2	3	4	5	6	7	8	9	A	B	C	D	E	F
+20300	𠌀	𠌁	𠌂	𠌃	𠌄	𠌅	𠌆	𠌇	𠌈	𠌉	𠌊	𠌋	𠌌	𠌍	𠌎	𠌏
+20310	𠌐	𠌑	𠌒	𠌓	𠌔	𠌕	𠌖	𠌗	𠌘	𠌙	𠌚	𠌛	𠌜	𠌝	𠌞	𠌟
+20320	𠌠	𠌡	𠌢	𠌣	𠌤	𠌥	𠌦	𠌧	𠌨	𠌩	𠌪	𠌫	𠌬	𠌭	𠌮	𠌯
+20330	𠌰	𠌱	𠌲	𠌳	𠌴	𠌵	𠌶	𠌷	𠌸	𠌹	𠌺	𠌻	𠌼	𠌽	𠌾	𠌿
+
+U+	0	1	2	3	4	5	6	7	8	9	A	B	C	D	E	F
+21000	𡀀	𡀁	𡀂	𡀃	𡀄	𡀅	𡀆	𡀇	𡀈	𡀉	𡀊	𡀋	𡀌	𡀍	𡀎	𡀏
+21010	𡀐	𡀑	𡀒	𡀓	𡀔	𡀕	𡀖	𡀗	𡀘	𡀙	𡀚	𡀛	𡀜	𡀝	𡀞	𡀟
+21020	𡀠	𡀡	𡀢	𡀣	𡀤	𡀥	𡀦	𡀧	𡀨	𡀩	𡀪	𡀫	𡀬	𡀭	𡀮	𡀯
+21030	𡀰	𡀱	𡀲	𡀳	𡀴	𡀵	𡀶	𡀷	𡀸	𡀹	𡀺	𡀻	𡀼	𡀽	𡀾	𡀿
+21040	𡁀	𡁁	𡁂	𡁃	𡁄	𡁅	𡁆	𡁇	𡁈	𡁉	𡁊	𡁋	𡁌	𡁍	𡁎	𡁏
+21050	𡁐	𡁑	𡁒	𡁓	𡁔	𡁕	𡁖	𡁗	𡁘	𡁙	𡁚	𡁛	𡁜	𡁝	𡁞	𡁟
+21060	𡁠	𡁡	𡁢	𡁣	𡁤	𡁥	𡁦	𡁧	𡁨	𡁩	𡁪	𡁫	𡁬	𡁭	𡁮	𡁯
+21070	𡁰	𡁱	𡁲	𡁳	𡁴	𡁵	𡁶	𡁷	𡁸	𡁹	𡁺	𡁻	𡁼	𡁽	𡁾	𡁿
+21080	𡂀	𡂁	𡂂	𡂃	𡂄	𡂅	𡂆	𡂇	𡂈	𡂉	𡂊	𡂋	𡂌	𡂍	𡂎	𡂏
+21090	𡂐	𡂑	𡂒	𡂓	𡂔	𡂕	𡂖	𡂗	𡂘	𡂙	𡂚	𡂛	𡂜	𡂝	𡂞	𡂟
+210A0	𡂠	𡂡	𡂢	𡂣	𡂤	𡂥	𡂦	𡂧	𡂨	𡂩	𡂪	𡂫	𡂬	𡂭	𡂮	𡂯
+210B0	𡂰	𡂱	𡂲	𡂳	𡂴	𡂵	𡂶	𡂷	𡂸	𡂹	𡂺	𡂻	𡂼	𡂽	𡂾	𡂿
+210C0	𡃀	𡃁	𡃂	𡃃	𡃄	𡃅	𡃆	𡃇	𡃈	𡃉	𡃊	𡃋	𡃌	𡃍	𡃎	𡃏
+210D0	𡃐	𡃑	𡃒	𡃓	𡃔	𡃕	𡃖	𡃗	𡃘	𡃙	𡃚	𡃛	𡃜	𡃝	𡃞	𡃟
+210E0	𡃠	𡃡	𡃢	𡃣	𡃤	𡃥	𡃦	𡃧	𡃨	𡃩	𡃪	𡃫	𡃬	𡃭	𡃮	𡃯
+210F0	𡃰	𡃱	𡃲	𡃳	𡃴	𡃵	𡃶	𡃷	𡃸	𡃹	𡃺	𡃻	𡃼	𡃽	𡃾	𡃿
+U+	0	1	2	3	4	5	6	7	8	9	A	B	C	D	E	F
+21100	𡄀	𡄁	𡄂	𡄃	𡄄	𡄅	𡄆	𡄇	𡄈	𡄉	𡄊	𡄋	𡄌	𡄍	𡄎	𡄏
+21110	𡄐	𡄑	𡄒	𡄓	𡄔	𡄕	𡄖	𡄗	𡄘	𡄙	𡄚	𡄛	𡄜	𡄝	𡄞	𡄟
+21120	𡄠	𡄡	𡄢	𡄣	𡄤	𡄥	𡄦	𡄧	𡄨	𡄩	𡄪	𡄫	𡄬	𡄭	𡄮	𡄯
+21130	𡄰	𡄱	𡄲	𡄳	𡄴	𡄵	𡄶	𡄷	𡄸	𡄹	𡄺	𡄻	𡄼	𡄽	𡄾	𡄿
+21140	𡅀	𡅁	𡅂	𡅃	𡅄	𡅅	𡅆	𡅇	𡅈	𡅉	𡅊	𡅋	𡅌	𡅍	𡅎	𡅏
+21150	𡅐	𡅑	𡅒	𡅓	𡅔	𡅕	𡅖	𡅗	𡅘	𡅙	𡅚	𡅛	𡅜	𡅝	𡅞	𡅟
+21160	𡅠	𡅡	𡅢	𡅣	𡅤	𡅥	𡅦	𡅧	𡅨	𡅩	𡅪	𡅫	𡅬	𡅭	𡅮	𡅯
+21170	𡅰	𡅱	𡅲	𡅳	𡅴	𡅵	𡅶	𡅷	𡅸	𡅹	𡅺	𡅻	𡅼	𡅽	𡅾	𡅿
+21180	𡆀	𡆁	𡆂	𡆃	𡆄	𡆅	𡆆	𡆇	𡆈	𡆉	𡆊	𡆋	𡆌	𡆍	𡆎	𡆏
+21190	𡆐	𡆑	𡆒	𡆓	𡆔	𡆕	𡆖	𡆗	𡆘	𡆙	𡆚	𡆛	𡆜	𡆝	𡆞	𡆟
+211A0	𡆠	𡆡	𡆢	𡆣	𡆤	𡆥	𡆦	𡆧	𡆨	𡆩	𡆪	𡆫	𡆬	𡆭	𡆮	𡆯
+211B0	𡆰	𡆱	𡆲	𡆳	𡆴	𡆵	𡆶	𡆷	𡆸	𡆹	𡆺	𡆻	𡆼	𡆽	𡆾	𡆿
+211C0	𡇀	𡇁	𡇂	𡇃	𡇄	𡇅	𡇆	𡇇	𡇈	𡇉	𡇊	𡇋	𡇌	𡇍	𡇎	𡇏
+211D0	𡇐	𡇑	𡇒	𡇓	𡇔	𡇕	𡇖	𡇗	𡇘	𡇙	𡇚	𡇛	𡇜	𡇝	𡇞	𡇟
+211E0	𡇠	𡇡	𡇢	𡇣	𡇤	𡇥	𡇦	𡇧	𡇨	𡇩	𡇪	𡇫	𡇬	𡇭	𡇮	𡇯
+211F0	𡇰	𡇱	𡇲	𡇳	𡇴	𡇵	𡇶	𡇷	𡇸	𡇹	𡇺	𡇻	𡇼	𡇽	𡇾	𡇿
+U+	0	1	2	3	4	5	6	7	8	9	A	B	C	D	E	F
+21200	𡈀	𡈁	𡈂	𡈃	𡈄	𡈅	𡈆	𡈇	𡈈	𡈉	𡈊	𡈋	𡈌	𡈍	𡈎	𡈏
+21210	𡈐	𡈑	𡈒	𡈓	𡈔	𡈕	𡈖	𡈗	𡈘	𡈙	𡈚	𡈛	𡈜	𡈝	𡈞	𡈟
+21220	𡈠	𡈡	𡈢	𡈣	𡈤	𡈥	𡈦	𡈧	𡈨	𡈩	𡈪	𡈫	𡈬	𡈭	𡈮	𡈯
+21230	𡈰	𡈱	𡈲	𡈳	𡈴	𡈵	𡈶	𡈷	𡈸	𡈹	𡈺	𡈻	𡈼	𡈽	𡈾	𡈿
+21240	𡉀	𡉁	𡉂	𡉃	𡉄	𡉅	𡉆	𡉇	𡉈	𡉉	𡉊	𡉋	𡉌	𡉍	𡉎	𡉏
+21250	𡉐	𡉑	𡉒	𡉓	𡉔	𡉕	𡉖	𡉗	𡉘	𡉙	𡉚	𡉛	𡉜	𡉝	𡉞	𡉟
+21260	𡉠	𡉡	𡉢	𡉣	𡉤	𡉥	𡉦	𡉧	𡉨	𡉩	𡉪	𡉫	𡉬	𡉭	𡉮	𡉯
+21270	𡉰	𡉱	𡉲	𡉳	𡉴	𡉵	𡉶	𡉷	𡉸	𡉹	𡉺	𡉻	𡉼	𡉽	𡉾	𡉿
+21280	𡊀	𡊁	𡊂	𡊃	𡊄	𡊅	𡊆	𡊇	𡊈	𡊉	𡊊	𡊋	𡊌	𡊍	𡊎	𡊏
+21290	𡊐	𡊑	𡊒	𡊓	𡊔	𡊕	𡊖	𡊗	𡊘	𡊙	𡊚	𡊛	𡊜	𡊝	𡊞	𡊟
+212A0	𡊠	𡊡	𡊢	𡊣	𡊤	𡊥	𡊦	𡊧	𡊨	𡊩	𡊪	𡊫	𡊬	𡊭	𡊮	𡊯
+212B0	𡊰	𡊱	𡊲	𡊳	𡊴	𡊵	𡊶	𡊷	𡊸	𡊹	𡊺	𡊻	𡊼	𡊽	𡊾	𡊿
+212C0	𡋀	𡋁	𡋂	𡋃	𡋄	𡋅	𡋆	𡋇	𡋈	𡋉	𡋊	𡋋	𡋌	𡋍	𡋎	𡋏
+212D0	𡋐	𡋑	𡋒	𡋓	𡋔	𡋕	𡋖	𡋗	𡋘	𡋙	𡋚	𡋛	𡋜	𡋝	𡋞	𡋟
+212E0	𡋠	𡋡	𡋢	𡋣	𡋤	𡋥	𡋦	𡋧	𡋨	𡋩	𡋪	𡋫	𡋬	𡋭	𡋮	𡋯
+212F0	𡋰	𡋱	𡋲	𡋳	𡋴	𡋵	𡋶	𡋷	𡋸	𡋹	𡋺	𡋻	𡋼	𡋽	𡋾	𡋿
+U+	0	1	2	3	4	5	6	7	8	9	A	B	C	D	E	F
+21300	𡌀	𡌁	𡌂	𡌃	𡌄	𡌅	𡌆	𡌇	𡌈	𡌉	𡌊	𡌋	𡌌	𡌍	𡌎	𡌏
+21310	𡌐	𡌑	𡌒	𡌓	𡌔	𡌕	𡌖	𡌗	𡌘	𡌙	𡌚	𡌛	𡌜	𡌝	𡌞	𡌟
+21320	𡌠	𡌡	𡌢	𡌣	𡌤	𡌥	𡌦	𡌧	𡌨	𡌩	𡌪	𡌫	𡌬	𡌭	𡌮	𡌯
+21330	𡌰	𡌱	𡌲	𡌳	𡌴	𡌵	𡌶	𡌷	𡌸	𡌹	𡌺	𡌻	𡌼	𡌽	𡌾	𡌿
+21340	𡍀	𡍁	𡍂	𡍃	𡍄	𡍅	𡍆	𡍇	𡍈	𡍉	𡍊	𡍋	𡍌	𡍍	𡍎	𡍏
+21350	𡍐	𡍑	𡍒	𡍓	𡍔	𡍕	𡍖	𡍗	𡍘	𡍙	𡍚	𡍛	𡍜	𡍝	𡍞	𡍟
+21360	𡍠	𡍡	𡍢	𡍣	𡍤	𡍥	𡍦	𡍧	𡍨	𡍩	𡍪	𡍫	𡍬	𡍭	𡍮	𡍯
+21370	𡍰	𡍱	𡍲	𡍳	𡍴	𡍵	𡍶	𡍷	𡍸	𡍹	𡍺	𡍻	𡍼	𡍽	𡍾	𡍿
+21380	𡎀	𡎁	𡎂	𡎃	𡎄	𡎅	𡎆	𡎇	𡎈	𡎉	𡎊	𡎋	𡎌	𡎍	𡎎	𡎏
+21390	𡎐	𡎑	𡎒	𡎓	𡎔	𡎕	𡎖	𡎗	𡎘	𡎙	𡎚	𡎛	𡎜	𡎝	𡎞	𡎟
+213A0	𡎠	𡎡	𡎢	𡎣	𡎤	𡎥	𡎦	𡎧	𡎨	𡎩	𡎪	𡎫	𡎬	𡎭	𡎮	𡎯
+213B0	𡎰	𡎱	𡎲	𡎳	𡎴	𡎵	𡎶	𡎷	𡎸	𡎹	𡎺	𡎻	𡎼	𡎽	𡎾	𡎿
+213C0	𡏀	𡏁	𡏂	𡏃	𡏄	𡏅	𡏆	𡏇	𡏈	𡏉	𡏊	𡏋	𡏌	𡏍	𡏎	𡏏
+213D0	𡏐	𡏑	𡏒	𡏓	𡏔	𡏕	𡏖	𡏗	𡏘	𡏙	𡏚	𡏛	𡏜	𡏝	𡏞	𡏟
+213E0	𡏠	𡏡	𡏢	𡏣	𡏤	𡏥	𡏦	𡏧	𡏨	𡏩	𡏪	𡏫	𡏬	𡏭	𡏮	𡏯
+213F0	𡏰	𡏱	𡏲	𡏳	𡏴	𡏵	𡏶	𡏷	𡏸	𡏹	𡏺	𡏻	𡏼	𡏽	𡏾	𡏿
+U+	0	1	2	3	4	5	6	7	8	9	A	B	C	D	E	F
+21400	𡐀	𡐁	𡐂	𡐃	𡐄	𡐅	𡐆	𡐇	𡐈	𡐉	𡐊	𡐋	𡐌	𡐍	𡐎	𡐏
+21410	𡐐	𡐑	𡐒	𡐓	𡐔	𡐕	𡐖	𡐗	𡐘	𡐙	𡐚	𡐛	𡐜	𡐝	𡐞	𡐟
+21420	𡐠	𡐡	𡐢	𡐣	𡐤	𡐥	𡐦	𡐧	𡐨	𡐩	𡐪	𡐫	𡐬	𡐭	𡐮	𡐯
+21430	𡐰	𡐱	𡐲	𡐳	𡐴	𡐵	𡐶	𡐷	𡐸	𡐹	𡐺	𡐻	𡐼	𡐽	𡐾	𡐿
+21440	𡑀	𡑁	𡑂	𡑃	𡑄	𡑅	𡑆	𡑇	𡑈	𡑉	𡑊	𡑋	𡑌	𡑍	𡑎	𡑏
+21450	𡑐	𡑑	𡑒	𡑓	𡑔	𡑕	𡑖	𡑗	𡑘	𡑙	𡑚	𡑛	𡑜	𡑝	𡑞	𡑟
+21460	𡑠	𡑡	𡑢	𡑣	𡑤	𡑥	𡑦	𡑧	𡑨	𡑩	𡑪	𡑫	𡑬	𡑭	𡑮	𡑯
+21470	𡑰	𡑱	𡑲	𡑳	𡑴	𡑵	𡑶	𡑷	𡑸	𡑹	𡑺	𡑻	𡑼	𡑽	𡑾	𡑿
+21480	𡒀	𡒁	𡒂	𡒃	𡒄	𡒅	𡒆	𡒇	𡒈	𡒉	𡒊	𡒋	𡒌	𡒍	𡒎	𡒏
+21490	𡒐	𡒑	𡒒	𡒓	𡒔	𡒕	𡒖	𡒗	𡒘	𡒙	𡒚	𡒛	𡒜	𡒝	𡒞	𡒟
+214A0	𡒠	𡒡	𡒢	𡒣	𡒤	𡒥	𡒦	𡒧	𡒨	𡒩	𡒪	𡒫	𡒬	𡒭	𡒮	𡒯
+214B0	𡒰	𡒱	𡒲	𡒳	𡒴	𡒵	𡒶	𡒷	𡒸	𡒹	𡒺	𡒻	𡒼	𡒽	𡒾	𡒿
+214C0	𡓀	𡓁	𡓂	𡓃	𡓄	𡓅	𡓆	𡓇	𡓈	𡓉	𡓊	𡓋	𡓌	𡓍	𡓎	𡓏
+214D0	𡓐	𡓑	𡓒	𡓓	𡓔	𡓕	𡓖	𡓗	𡓘	𡓙	𡓚	𡓛	𡓜	𡓝	𡓞	𡓟
+214E0	𡓠	𡓡	𡓢	𡓣	𡓤	𡓥	𡓦	𡓧	𡓨	𡓩	𡓪	𡓫	𡓬	𡓭	𡓮	𡓯
+214F0	𡓰	𡓱	𡓲	𡓳	𡓴	𡓵	𡓶	𡓷	𡓸	𡓹	𡓺	𡓻	𡓼	𡓽	𡓾	𡓿
+U+	0	1	2	3	4	5	6	7	8	9	A	B	C	D	E	F
+21500	𡔀	𡔁	𡔂	𡔃	𡔄	𡔅	𡔆	𡔇	𡔈	𡔉	𡔊	𡔋	𡔌	𡔍	𡔎	𡔏
+21510	𡔐	𡔑	𡔒	𡔓	𡔔	𡔕	𡔖	𡔗	𡔘	𡔙	𡔚	𡔛	𡔜	𡔝	𡔞	𡔟
+21520	𡔠	𡔡	𡔢	𡔣	𡔤	𡔥	𡔦	𡔧	𡔨	𡔩	𡔪	𡔫	𡔬	𡔭	𡔮	𡔯
+21530	𡔰	𡔱	𡔲	𡔳	𡔴	𡔵	𡔶	𡔷	𡔸	𡔹	𡔺	𡔻	𡔼	𡔽	𡔾	𡔿
+21540	𡕀	𡕁	𡕂	𡕃	𡕄	𡕅	𡕆	𡕇	𡕈	𡕉	𡕊	𡕋	𡕌	𡕍	𡕎	𡕏
+21550	𡕐	𡕑	𡕒	𡕓	𡕔	𡕕	𡕖	𡕗	𡕘	𡕙	𡕚	𡕛	𡕜	𡕝	𡕞	𡕟
+21560	𡕠	𡕡	𡕢	𡕣	𡕤	𡕥	𡕦	𡕧	𡕨	𡕩	𡕪	𡕫	𡕬	𡕭	𡕮	𡕯
+21570	𡕰	𡕱	𡕲	𡕳	𡕴	𡕵	𡕶	𡕷	𡕸	𡕹	𡕺	𡕻	𡕼	𡕽	𡕾	𡕿
+21580	𡖀	𡖁	𡖂	𡖃	𡖄	𡖅	𡖆	𡖇	𡖈	𡖉	𡖊	𡖋	𡖌	𡖍	𡖎	𡖏
+21590	𡖐	𡖑	𡖒	𡖓	𡖔	𡖕	𡖖	𡖗	𡖘	𡖙	𡖚	𡖛	𡖜	𡖝	𡖞	𡖟
+215A0	𡖠	𡖡	𡖢	𡖣	𡖤	𡖥	𡖦	𡖧	𡖨	𡖩	𡖪	𡖫	𡖬	𡖭	𡖮	𡖯
+215B0	𡖰	𡖱	𡖲	𡖳	𡖴	𡖵	𡖶	𡖷	𡖸	𡖹	𡖺	𡖻	𡖼	𡖽	𡖾	𡖿
+215C0	𡗀	𡗁	𡗂	𡗃	𡗄	𡗅	𡗆	𡗇	𡗈	𡗉	𡗊	𡗋	𡗌	𡗍	𡗎	𡗏
+215D0	𡗐	𡗑	𡗒	𡗓	𡗔	𡗕	𡗖	𡗗	𡗘	𡗙	𡗚	𡗛	𡗜	𡗝	𡗞	𡗟
+215E0	𡗠	𡗡	𡗢	𡗣	𡗤	𡗥	𡗦	𡗧	𡗨	𡗩	𡗪	𡗫	𡗬	𡗭	𡗮	𡗯
+215F0	𡗰	𡗱	𡗲	𡗳	𡗴	𡗵	𡗶	𡗷	𡗸	𡗹	𡗺	𡗻	𡗼	𡗽	𡗾	𡗿
+U+	0	1	2	3	4	5	6	7	8	9	A	B	C	D	E	F
+21600	𡘀	𡘁	𡘂	𡘃	𡘄	𡘅	𡘆	𡘇	𡘈	𡘉	𡘊	𡘋	𡘌	𡘍	𡘎	𡘏
+21610	𡘐	𡘑	𡘒	𡘓	𡘔	𡘕	𡘖	𡘗	𡘘	𡘙	𡘚	𡘛	𡘜	𡘝	𡘞	𡘟
+21620	𡘠	𡘡	𡘢	𡘣	𡘤	𡘥	𡘦	𡘧	𡘨	𡘩	𡘪	𡘫	𡘬	𡘭	𡘮	𡘯
+21630	𡘰	𡘱	𡘲	𡘳	𡘴	𡘵	𡘶	𡘷	𡘸	𡘹	𡘺	𡘻	𡘼	𡘽	𡘾	𡘿
+21640	𡙀	𡙁	𡙂	𡙃	𡙄	𡙅	𡙆	𡙇	𡙈	𡙉	𡙊	𡙋	𡙌	𡙍	𡙎	𡙏
+21650	𡙐	𡙑	𡙒	𡙓	𡙔	𡙕	𡙖	𡙗	𡙘	𡙙	𡙚	𡙛	𡙜	𡙝	𡙞	𡙟
+21660	𡙠	𡙡	𡙢	𡙣	𡙤	𡙥	𡙦	𡙧	𡙨	𡙩	𡙪	𡙫	𡙬	𡙭	𡙮	𡙯
+21670	𡙰	𡙱	𡙲	𡙳	𡙴	𡙵	𡙶	𡙷	𡙸	𡙹	𡙺	𡙻	𡙼	𡙽	𡙾	𡙿
+21680	𡚀	𡚁	𡚂	𡚃	𡚄	𡚅	𡚆	𡚇	𡚈	𡚉	𡚊	𡚋	𡚌	𡚍	𡚎	𡚏
+21690	𡚐	𡚑	𡚒	𡚓	𡚔	𡚕	𡚖	𡚗	𡚘	𡚙	𡚚	𡚛	𡚜	𡚝	𡚞	𡚟
+216A0	𡚠	𡚡	𡚢	𡚣	𡚤	𡚥	𡚦	𡚧	𡚨	𡚩	𡚪	𡚫	𡚬	𡚭	𡚮	𡚯
+216B0	𡚰	𡚱	𡚲	𡚳	𡚴	𡚵	𡚶	𡚷	𡚸	𡚹	𡚺	𡚻	𡚼	𡚽	𡚾	𡚿
+216C0	𡛀	𡛁	𡛂	𡛃	𡛄	𡛅	𡛆	𡛇	𡛈	𡛉	𡛊	𡛋	𡛌	𡛍	𡛎	𡛏
+216D0	𡛐	𡛑	𡛒	𡛓	𡛔	𡛕	𡛖	𡛗	𡛘	𡛙	𡛚	𡛛	𡛜	𡛝	𡛞	𡛟
+216E0	𡛠	𡛡	𡛢	𡛣	𡛤	𡛥	𡛦	𡛧	𡛨	𡛩	𡛪	𡛫	𡛬	𡛭	𡛮	𡛯
+216F0	𡛰	𡛱	𡛲	𡛳	𡛴	𡛵	𡛶	𡛷	𡛸	𡛹	𡛺	𡛻	𡛼	𡛽	𡛾	𡛿
+U+	0	1	2	3	4	5	6	7	8	9	A	B	C	D	E	F
+21700	𡜀	𡜁	𡜂	𡜃	𡜄	𡜅	𡜆	𡜇	𡜈	𡜉	𡜊	𡜋	𡜌	𡜍	𡜎	𡜏
+21710	𡜐	𡜑	𡜒	𡜓	𡜔	𡜕	𡜖	𡜗	𡜘	𡜙	𡜚	𡜛	𡜜	𡜝	𡜞	𡜟
+21720	𡜠	𡜡	𡜢	𡜣	𡜤	𡜥	𡜦	𡜧	𡜨	𡜩	𡜪	𡜫	𡜬	𡜭	𡜮	𡜯
+21730	𡜰	𡜱	𡜲	𡜳	𡜴	𡜵	𡜶	𡜷	𡜸	𡜹	𡜺	𡜻	𡜼	𡜽	𡜾	𡜿
+21740	𡝀	𡝁	𡝂	𡝃	𡝄	𡝅	𡝆	𡝇	𡝈	𡝉	𡝊	𡝋	𡝌	𡝍	𡝎	𡝏
+21750	𡝐	𡝑	𡝒	𡝓	𡝔	𡝕	𡝖	𡝗	𡝘	𡝙	𡝚	𡝛	𡝜	𡝝	𡝞	𡝟
+21760	𡝠	𡝡	𡝢	𡝣	𡝤	𡝥	𡝦	𡝧	𡝨	𡝩	𡝪	𡝫	𡝬	𡝭	𡝮	𡝯
+21770	𡝰	𡝱	𡝲	𡝳	𡝴	𡝵	𡝶	𡝷	𡝸	𡝹	𡝺	𡝻	𡝼	𡝽	𡝾	𡝿
+21780	𡞀	𡞁	𡞂	𡞃	𡞄	𡞅	𡞆	𡞇	𡞈	𡞉	𡞊	𡞋	𡞌	𡞍	𡞎	𡞏
+21790	𡞐	𡞑	𡞒	𡞓	𡞔	𡞕	𡞖	𡞗	𡞘	𡞙	𡞚	𡞛	𡞜	𡞝	𡞞	𡞟
+217A0	𡞠	𡞡	𡞢	𡞣	𡞤	𡞥	𡞦	𡞧	𡞨	𡞩	𡞪	𡞫	𡞬	𡞭	𡞮	𡞯
+217B0	𡞰	𡞱	𡞲	𡞳	𡞴	𡞵	𡞶	𡞷	𡞸	𡞹	𡞺	𡞻	𡞼	𡞽	𡞾	𡞿
+217C0	𡟀	𡟁	𡟂	𡟃	𡟄	𡟅	𡟆	𡟇	𡟈	𡟉	𡟊	𡟋	𡟌	𡟍	𡟎	𡟏
+217D0	𡟐	𡟑	𡟒	𡟓	𡟔	𡟕	𡟖	𡟗	𡟘	𡟙	𡟚	𡟛	𡟜	𡟝	𡟞	𡟟
+217E0	𡟠	𡟡	𡟢	𡟣	𡟤	𡟥	𡟦	𡟧	𡟨	𡟩	𡟪	𡟫	𡟬	𡟭	𡟮	𡟯
+217F0	𡟰	𡟱	𡟲	𡟳	𡟴	𡟵	𡟶	𡟷	𡟸	𡟹	𡟺	𡟻	𡟼	𡟽	𡟾	𡟿
+U+	0	1	2	3	4	5	6	7	8	9	A	B	C	D	E	F
+21800	𡠀	𡠁	𡠂	𡠃	𡠄	𡠅	𡠆	𡠇	𡠈	𡠉	𡠊	𡠋	𡠌	𡠍	𡠎	𡠏
+21810	𡠐	𡠑	𡠒	𡠓	𡠔	𡠕	𡠖	𡠗	𡠘	𡠙	𡠚	𡠛	𡠜	𡠝	𡠞	𡠟
+21820	𡠠	𡠡	𡠢	𡠣	𡠤	𡠥	𡠦	𡠧	𡠨	𡠩	𡠪	𡠫	𡠬	𡠭	𡠮	𡠯
+21830	𡠰	𡠱	𡠲	𡠳	𡠴	𡠵	𡠶	𡠷	𡠸	𡠹	𡠺	𡠻	𡠼	𡠽	𡠾	𡠿
+21840	𡡀	𡡁	𡡂	𡡃	𡡄	𡡅	𡡆	𡡇	𡡈	𡡉	𡡊	𡡋	𡡌	𡡍	𡡎	𡡏
+21850	𡡐	𡡑	𡡒	𡡓	𡡔	𡡕	𡡖	𡡗	𡡘	𡡙	𡡚	𡡛	𡡜	𡡝	𡡞	𡡟
+21860	𡡠	𡡡	𡡢	𡡣	𡡤	𡡥	𡡦	𡡧	𡡨	𡡩	𡡪	𡡫	𡡬	𡡭	𡡮	𡡯
+21870	𡡰	𡡱	𡡲	𡡳	𡡴	𡡵	𡡶	𡡷	𡡸	𡡹	𡡺	𡡻	𡡼	𡡽	𡡾	𡡿
+21880	𡢀	𡢁	𡢂	𡢃	𡢄	𡢅	𡢆	𡢇	𡢈	𡢉	𡢊	𡢋	𡢌	𡢍	𡢎	𡢏
+21890	𡢐	𡢑	𡢒	𡢓	𡢔	𡢕	𡢖	𡢗	𡢘	𡢙	𡢚	𡢛	𡢜	𡢝	𡢞	𡢟
+218A0	𡢠	𡢡	𡢢	𡢣	𡢤	𡢥	𡢦	𡢧	𡢨	𡢩	𡢪	𡢫	𡢬	𡢭	𡢮	𡢯
+218B0	𡢰	𡢱	𡢲	𡢳	𡢴	𡢵	𡢶	𡢷	𡢸	𡢹	𡢺	𡢻	𡢼	𡢽	𡢾	𡢿
+218C0	𡣀	𡣁	𡣂	𡣃	𡣄	𡣅	𡣆	𡣇	𡣈	𡣉	𡣊	𡣋	𡣌	𡣍	𡣎	𡣏
+218D0	𡣐	𡣑	𡣒	𡣓	𡣔	𡣕	𡣖	𡣗	𡣘	𡣙	𡣚	𡣛	𡣜	𡣝	𡣞	𡣟
+218E0	𡣠	𡣡	𡣢	𡣣	𡣤	𡣥	𡣦	𡣧	𡣨	𡣩	𡣪	𡣫	𡣬	𡣭	𡣮	𡣯
+218F0	𡣰	𡣱	𡣲	𡣳	𡣴	𡣵	𡣶	𡣷	𡣸	𡣹	𡣺	𡣻	𡣼	𡣽	𡣾	𡣿
+U+	0	1	2	3	4	5	6	7	8	9	A	B	C	D	E	F
+21900	𡤀	𡤁	𡤂	𡤃	𡤄	𡤅	𡤆	𡤇	𡤈	𡤉	𡤊	𡤋	𡤌	𡤍	𡤎	𡤏
+21910	𡤐	𡤑	𡤒	𡤓	𡤔	𡤕	𡤖	𡤗	𡤘	𡤙	𡤚	𡤛	𡤜	𡤝	𡤞	𡤟
+21920	𡤠	𡤡	𡤢	𡤣	𡤤	𡤥	𡤦	𡤧	𡤨	𡤩	𡤪	𡤫	𡤬	𡤭	𡤮	𡤯
+21930	𡤰	𡤱	𡤲	𡤳	𡤴	𡤵	𡤶	𡤷	𡤸	𡤹	𡤺	𡤻	𡤼	𡤽	𡤾	𡤿
+21940	𡥀	𡥁	𡥂	𡥃	𡥄	𡥅	𡥆	𡥇	𡥈	𡥉	𡥊	𡥋	𡥌	𡥍	𡥎	𡥏
+21950	𡥐	𡥑	𡥒	𡥓	𡥔	𡥕	𡥖	𡥗	𡥘	𡥙	𡥚	𡥛	𡥜	𡥝	𡥞	𡥟
+21960	𡥠	𡥡	𡥢	𡥣	𡥤	𡥥	𡥦	𡥧	𡥨	𡥩	𡥪	𡥫	𡥬	𡥭	𡥮	𡥯
+21970	𡥰	𡥱	𡥲	𡥳	𡥴	𡥵	𡥶	𡥷	𡥸	𡥹	𡥺	𡥻	𡥼	𡥽	𡥾	𡥿
+21980	𡦀	𡦁	𡦂	𡦃	𡦄	𡦅	𡦆	𡦇	𡦈	𡦉	𡦊	𡦋	𡦌	𡦍	𡦎	𡦏
+21990	𡦐	𡦑	𡦒	𡦓	𡦔	𡦕	𡦖	𡦗	𡦘	𡦙	𡦚	𡦛	𡦜	𡦝	𡦞	𡦟
+219A0	𡦠	𡦡	𡦢	𡦣	𡦤	𡦥	𡦦	𡦧	𡦨	𡦩	𡦪	𡦫	𡦬	𡦭	𡦮	𡦯
+219B0	𡦰	𡦱	𡦲	𡦳	𡦴	𡦵	𡦶	𡦷	𡦸	𡦹	𡦺	𡦻	𡦼	𡦽	𡦾	𡦿
+219C0	𡧀	𡧁	𡧂	𡧃	𡧄	𡧅	𡧆	𡧇	𡧈	𡧉	𡧊	𡧋	𡧌	𡧍	𡧎	𡧏
+219D0	𡧐	𡧑	𡧒	𡧓	𡧔	𡧕	𡧖	𡧗	𡧘	𡧙	𡧚	𡧛	𡧜	𡧝	𡧞	𡧟
+219E0	𡧠	𡧡	𡧢	𡧣	𡧤	𡧥	𡧦	𡧧	𡧨	𡧩	𡧪	𡧫	𡧬	𡧭	𡧮	𡧯
+219F0	𡧰	𡧱	𡧲	𡧳	𡧴	𡧵	𡧶	𡧷	𡧸	𡧹	𡧺	𡧻	𡧼	𡧽	𡧾	𡧿
+U+	0	1	2	3	4	5	6	7	8	9	A	B	C	D	E	F
+21A00	𡨀	𡨁	𡨂	𡨃	𡨄	𡨅	𡨆	𡨇	𡨈	𡨉	𡨊	𡨋	𡨌	𡨍	𡨎	𡨏
+21A10	𡨐	𡨑	𡨒	𡨓	𡨔	𡨕	𡨖	𡨗	𡨘	𡨙	𡨚	𡨛	𡨜	𡨝	𡨞	𡨟
+21A20	𡨠	𡨡	𡨢	𡨣	𡨤	𡨥	𡨦	𡨧	𡨨	𡨩	𡨪	𡨫	𡨬	𡨭	𡨮	𡨯
+21A30	𡨰	𡨱	𡨲	𡨳	𡨴	𡨵	𡨶	𡨷	𡨸	𡨹	𡨺	𡨻	𡨼	𡨽	𡨾	𡨿
+21A40	𡩀	𡩁	𡩂	𡩃	𡩄	𡩅	𡩆	𡩇	𡩈	𡩉	𡩊	𡩋	𡩌	𡩍	𡩎	𡩏
+21A50	𡩐	𡩑	𡩒	𡩓	𡩔	𡩕	𡩖	𡩗	𡩘	𡩙	𡩚	𡩛	𡩜	𡩝	𡩞	𡩟
+21A60	𡩠	𡩡	𡩢	𡩣	𡩤	𡩥	𡩦	𡩧	𡩨	𡩩	𡩪	𡩫	𡩬	𡩭	𡩮	𡩯
+21A70	𡩰	𡩱	𡩲	𡩳	𡩴	𡩵	𡩶	𡩷	𡩸	𡩹	𡩺	𡩻	𡩼	𡩽	𡩾	𡩿
+21A80	𡪀	𡪁	𡪂	𡪃	𡪄	𡪅	𡪆	𡪇	𡪈	𡪉	𡪊	𡪋	𡪌	𡪍	𡪎	𡪏
+21A90	𡪐	𡪑	𡪒	𡪓	𡪔	𡪕	𡪖	𡪗	𡪘	𡪙	𡪚	𡪛	𡪜	𡪝	𡪞	𡪟
+21AA0	𡪠	𡪡	𡪢	𡪣	𡪤	𡪥	𡪦	𡪧	𡪨	𡪩	𡪪	𡪫	𡪬	𡪭	𡪮	𡪯
+21AB0	𡪰	𡪱	𡪲	𡪳	𡪴	𡪵	𡪶	𡪷	𡪸	𡪹	𡪺	𡪻	𡪼	𡪽	𡪾	𡪿
+21AC0	𡫀	𡫁	𡫂	𡫃	𡫄	𡫅	𡫆	𡫇	𡫈	𡫉	𡫊	𡫋	𡫌	𡫍	𡫎	𡫏
+21AD0	𡫐	𡫑	𡫒	𡫓	𡫔	𡫕	𡫖	𡫗	𡫘	𡫙	𡫚	𡫛	𡫜	𡫝	𡫞	𡫟
+21AE0	𡫠	𡫡	𡫢	𡫣	𡫤	𡫥	𡫦	𡫧	𡫨	𡫩	𡫪	𡫫	𡫬	𡫭	𡫮	𡫯
+21AF0	𡫰	𡫱	𡫲	𡫳	𡫴	𡫵	𡫶	𡫷	𡫸	𡫹	𡫺	𡫻	𡫼	𡫽	𡫾	𡫿
+U+	0	1	2	3	4	5	6	7	8	9	A	B	C	D	E	F
+21B00	𡬀	𡬁	𡬂	𡬃	𡬄	𡬅	𡬆	𡬇	𡬈	𡬉	𡬊	𡬋	𡬌	𡬍	𡬎	𡬏
+21B10	𡬐	𡬑	𡬒	𡬓	𡬔	𡬕	𡬖	𡬗	𡬘	𡬙	𡬚	𡬛	𡬜	𡬝	𡬞	𡬟
+21B20	𡬠	𡬡	𡬢	𡬣	𡬤	𡬥	𡬦	𡬧	𡬨	𡬩	𡬪	𡬫	𡬬	𡬭	𡬮	𡬯
+21B30	𡬰	𡬱	𡬲	𡬳	𡬴	𡬵	𡬶	𡬷	𡬸	𡬹	𡬺	𡬻	𡬼	𡬽	𡬾	𡬿
+21B40	𡭀	𡭁	𡭂	𡭃	𡭄	𡭅	𡭆	𡭇	𡭈	𡭉	𡭊	𡭋	𡭌	𡭍	𡭎	𡭏
+21B50	𡭐	𡭑	𡭒	𡭓	𡭔	𡭕	𡭖	𡭗	𡭘	𡭙	𡭚	𡭛	𡭜	𡭝	𡭞	𡭟
+21B60	𡭠	𡭡	𡭢	𡭣	𡭤	𡭥	𡭦	𡭧	𡭨	𡭩	𡭪	𡭫	𡭬	𡭭	𡭮	𡭯
+21B70	𡭰	𡭱	𡭲	𡭳	𡭴	𡭵	𡭶	𡭷	𡭸	𡭹	𡭺	𡭻	𡭼	𡭽	𡭾	𡭿
+21B80	𡮀	𡮁	𡮂	𡮃	𡮄	𡮅	𡮆	𡮇	𡮈	𡮉	𡮊	𡮋	𡮌	𡮍	𡮎	𡮏
+21B90	𡮐	𡮑	𡮒	𡮓	𡮔	𡮕	𡮖	𡮗	𡮘	𡮙	𡮚	𡮛	𡮜	𡮝	𡮞	𡮟
+21BA0	𡮠	𡮡	𡮢	𡮣	𡮤	𡮥	𡮦	𡮧	𡮨	𡮩	𡮪	𡮫	𡮬	𡮭	𡮮	𡮯
+21BB0	𡮰	𡮱	𡮲	𡮳	𡮴	𡮵	𡮶	𡮷	𡮸	𡮹	𡮺	𡮻	𡮼	𡮽	𡮾	𡮿
+21BC0	𡯀	𡯁	𡯂	𡯃	𡯄	𡯅	𡯆	𡯇	𡯈	𡯉	𡯊	𡯋	𡯌	𡯍	𡯎	𡯏
+21BD0	𡯐	𡯑	𡯒	𡯓	𡯔	𡯕	𡯖	𡯗	𡯘	𡯙	𡯚	𡯛	𡯜	𡯝	𡯞	𡯟
+21BE0	𡯠	𡯡	𡯢	𡯣	𡯤	𡯥	𡯦	𡯧	𡯨	𡯩	𡯪	𡯫	𡯬	𡯭	𡯮	𡯯
+21BF0	𡯰	𡯱	𡯲	𡯳	𡯴	𡯵	𡯶	𡯷	𡯸	𡯹	𡯺	𡯻	𡯼	𡯽	𡯾	𡯿
+U+	0	1	2	3	4	5	6	7	8	9	A	B	C	D	E	F
+21C00	𡰀	𡰁	𡰂	𡰃	𡰄	𡰅	𡰆	𡰇	𡰈	𡰉	𡰊	𡰋	𡰌	𡰍	𡰎	𡰏
+21C10	𡰐	𡰑	𡰒	𡰓	𡰔	𡰕	𡰖	𡰗	𡰘	𡰙	𡰚	𡰛	𡰜	𡰝	𡰞	𡰟
+21C20	𡰠	𡰡	𡰢	𡰣	𡰤	𡰥	𡰦	𡰧	𡰨	𡰩	𡰪	𡰫	𡰬	𡰭	𡰮	𡰯
+21C30	𡰰	𡰱	𡰲	𡰳	𡰴	𡰵	𡰶	𡰷	𡰸	𡰹	𡰺	𡰻	𡰼	𡰽	𡰾	𡰿
+21C40	𡱀	𡱁	𡱂	𡱃	𡱄	𡱅	𡱆	𡱇	𡱈	𡱉	𡱊	𡱋	𡱌	𡱍	𡱎	𡱏
+21C50	𡱐	𡱑	𡱒	𡱓	𡱔	𡱕	𡱖	𡱗	𡱘	𡱙	𡱚	𡱛	𡱜	𡱝	𡱞	𡱟
+21C60	𡱠	𡱡	𡱢	𡱣	𡱤	𡱥	𡱦	𡱧	𡱨	𡱩	𡱪	𡱫	𡱬	𡱭	𡱮	𡱯
+21C70	𡱰	𡱱	𡱲	𡱳	𡱴	𡱵	𡱶	𡱷	𡱸	𡱹	𡱺	𡱻	𡱼	𡱽	𡱾	𡱿
+21C80	𡲀	𡲁	𡲂	𡲃	𡲄	𡲅	𡲆	𡲇	𡲈	𡲉	𡲊	𡲋	𡲌	𡲍	𡲎	𡲏
+21C90	𡲐	𡲑	𡲒	𡲓	𡲔	𡲕	𡲖	𡲗	𡲘	𡲙	𡲚	𡲛	𡲜	𡲝	𡲞	𡲟
+21CA0	𡲠	𡲡	𡲢	𡲣	𡲤	𡲥	𡲦	𡲧	𡲨	𡲩	𡲪	𡲫	𡲬	𡲭	𡲮	𡲯
+21CB0	𡲰	𡲱	𡲲	𡲳	𡲴	𡲵	𡲶	𡲷	𡲸	𡲹	𡲺	𡲻	𡲼	𡲽	𡲾	𡲿
+21CC0	𡳀	𡳁	𡳂	𡳃	𡳄	𡳅	𡳆	𡳇	𡳈	𡳉	𡳊	𡳋	𡳌	𡳍	𡳎	𡳏
+21CD0	𡳐	𡳑	𡳒	𡳓	𡳔	𡳕	𡳖	𡳗	𡳘	𡳙	𡳚	𡳛	𡳜	𡳝	𡳞	𡳟
+21CE0	𡳠	𡳡	𡳢	𡳣	𡳤	𡳥	𡳦	𡳧	𡳨	𡳩	𡳪	𡳫	𡳬	𡳭	𡳮	𡳯
+21CF0	𡳰	𡳱	𡳲	𡳳	𡳴	𡳵	𡳶	𡳷	𡳸	𡳹	𡳺	𡳻	𡳼	𡳽	𡳾	𡳿
+U+	0	1	2	3	4	5	6	7	8	9	A	B	C	D	E	F
+21D00	𡴀	𡴁	𡴂	𡴃	𡴄	𡴅	𡴆	𡴇	𡴈	𡴉	𡴊	𡴋	𡴌	𡴍	𡴎	𡴏
+21D10	𡴐	𡴑	𡴒	𡴓	𡴔	𡴕	𡴖	𡴗	𡴘	𡴙	𡴚	𡴛	𡴜	𡴝	𡴞	𡴟
+21D20	𡴠	𡴡	𡴢	𡴣	𡴤	𡴥	𡴦	𡴧	𡴨	𡴩	𡴪	𡴫	𡴬	𡴭	𡴮	𡴯
+21D30	𡴰	𡴱	𡴲	𡴳	𡴴	𡴵	𡴶	𡴷	𡴸	𡴹	𡴺	𡴻	𡴼	𡴽	𡴾	𡴿
+21D40	𡵀	𡵁	𡵂	𡵃	𡵄	𡵅	𡵆	𡵇	𡵈	𡵉	𡵊	𡵋	𡵌	𡵍	𡵎	𡵏
+21D50	𡵐	𡵑	𡵒	𡵓	𡵔	𡵕	𡵖	𡵗	𡵘	𡵙	𡵚	𡵛	𡵜	𡵝	𡵞	𡵟
+21D60	𡵠	𡵡	𡵢	𡵣	𡵤	𡵥	𡵦	𡵧	𡵨	𡵩	𡵪	𡵫	𡵬	𡵭	𡵮	𡵯
+21D70	𡵰	𡵱	𡵲	𡵳	𡵴	𡵵	𡵶	𡵷	𡵸	𡵹	𡵺	𡵻	𡵼	𡵽	𡵾	𡵿
+21D80	𡶀	𡶁	𡶂	𡶃	𡶄	𡶅	𡶆	𡶇	𡶈	𡶉	𡶊	𡶋	𡶌	𡶍	𡶎	𡶏
+21D90	𡶐	𡶑	𡶒	𡶓	𡶔	𡶕	𡶖	𡶗	𡶘	𡶙	𡶚	𡶛	𡶜	𡶝	𡶞	𡶟
+21DA0	𡶠	𡶡	𡶢	𡶣	𡶤	𡶥	𡶦	𡶧	𡶨	𡶩	𡶪	𡶫	𡶬	𡶭	𡶮	𡶯
+21DB0	𡶰	𡶱	𡶲	𡶳	𡶴	𡶵	𡶶	𡶷	𡶸	𡶹	𡶺	𡶻	𡶼	𡶽	𡶾	𡶿
+21DC0	𡷀	𡷁	𡷂	𡷃	𡷄	𡷅	𡷆	𡷇	𡷈	𡷉	𡷊	𡷋	𡷌	𡷍	𡷎	𡷏
+21DD0	𡷐	𡷑	𡷒	𡷓	𡷔	𡷕	𡷖	𡷗	𡷘	𡷙	𡷚	𡷛	𡷜	𡷝	𡷞	𡷟
+21DE0	𡷠	𡷡	𡷢	𡷣	𡷤	𡷥	𡷦	𡷧	𡷨	𡷩	𡷪	𡷫	𡷬	𡷭	𡷮	𡷯
+21DF0	𡷰	𡷱	𡷲	𡷳	𡷴	𡷵	𡷶	𡷷	𡷸	𡷹	𡷺	𡷻	𡷼	𡷽	𡷾	𡷿
+U+	0	1	2	3	4	5	6	7	8	9	A	B	C	D	E	F
+21E00	𡸀	𡸁	𡸂	𡸃	𡸄	𡸅	𡸆	𡸇	𡸈	𡸉	𡸊	𡸋	𡸌	𡸍	𡸎	𡸏
+21E10	𡸐	𡸑	𡸒	𡸓	𡸔	𡸕	𡸖	𡸗	𡸘	𡸙	𡸚	𡸛	𡸜	𡸝	𡸞	𡸟
+21E20	𡸠	𡸡	𡸢	𡸣	𡸤	𡸥	𡸦	𡸧	𡸨	𡸩	𡸪	𡸫	𡸬	𡸭	𡸮	𡸯
+21E30	𡸰	𡸱	𡸲	𡸳	𡸴	𡸵	𡸶	𡸷	𡸸	𡸹	𡸺	𡸻	𡸼	𡸽	𡸾	𡸿
+21E40	𡹀	𡹁	𡹂	𡹃	𡹄	𡹅	𡹆	𡹇	𡹈	𡹉	𡹊	𡹋	𡹌	𡹍	𡹎	𡹏
+21E50	𡹐	𡹑	𡹒	𡹓	𡹔	𡹕	𡹖	𡹗	𡹘	𡹙	𡹚	𡹛	𡹜	𡹝	𡹞	𡹟
+21E60	𡹠	𡹡	𡹢	𡹣	𡹤	𡹥	𡹦	𡹧	𡹨	𡹩	𡹪	𡹫	𡹬	𡹭	𡹮	𡹯
+21E70	𡹰	𡹱	𡹲	𡹳	𡹴	𡹵	𡹶	𡹷	𡹸	𡹹	𡹺	𡹻	𡹼	𡹽	𡹾	𡹿
+21E80	𡺀	𡺁	𡺂	𡺃	𡺄	𡺅	𡺆	𡺇	𡺈	𡺉	𡺊	𡺋	𡺌	𡺍	𡺎	𡺏
+21E90	𡺐	𡺑	𡺒	𡺓	𡺔	𡺕	𡺖	𡺗	𡺘	𡺙	𡺚	𡺛	𡺜	𡺝	𡺞	𡺟
+21EA0	𡺠	𡺡	𡺢	𡺣	𡺤	𡺥	𡺦	𡺧	𡺨	𡺩	𡺪	𡺫	𡺬	𡺭	𡺮	𡺯
+21EB0	𡺰	𡺱	𡺲	𡺳	𡺴	𡺵	𡺶	𡺷	𡺸	𡺹	𡺺	𡺻	𡺼	𡺽	𡺾	𡺿
+21EC0	𡻀	𡻁	𡻂	𡻃	𡻄	𡻅	𡻆	𡻇	𡻈	𡻉	𡻊	𡻋	𡻌	𡻍	𡻎	𡻏
+21ED0	𡻐	𡻑	𡻒	𡻓	𡻔	𡻕	𡻖	𡻗	𡻘	𡻙	𡻚	𡻛	𡻜	𡻝	𡻞	𡻟
+21EE0	𡻠	𡻡	𡻢	𡻣	𡻤	𡻥	𡻦	𡻧	𡻨	𡻩	𡻪	𡻫	𡻬	𡻭	𡻮	𡻯
+21EF0	𡻰	𡻱	𡻲	𡻳	𡻴	𡻵	𡻶	𡻷	𡻸	𡻹	𡻺	𡻻	𡻼	𡻽	𡻾	𡻿
+U+	0	1	2	3	4	5	6	7	8	9	A	B	C	D	E	F
+21F00	𡼀	𡼁	𡼂	𡼃	𡼄	𡼅	𡼆	𡼇	𡼈	𡼉	𡼊	𡼋	𡼌	𡼍	𡼎	𡼏
+21F10	𡼐	𡼑	𡼒	𡼓	𡼔	𡼕	𡼖	𡼗	𡼘	𡼙	𡼚	𡼛	𡼜	𡼝	𡼞	𡼟
+21F20	𡼠	𡼡	𡼢	𡼣	𡼤	𡼥	𡼦	𡼧	𡼨	𡼩	𡼪	𡼫	𡼬	𡼭	𡼮	𡼯
+21F30	𡼰	𡼱	𡼲	𡼳	𡼴	𡼵	𡼶	𡼷	𡼸	𡼹	𡼺	𡼻	𡼼	𡼽	𡼾	𡼿
+21F40	𡽀	𡽁	𡽂	𡽃	𡽄	𡽅	𡽆	𡽇	𡽈	𡽉	𡽊	𡽋	𡽌	𡽍	𡽎	𡽏
+21F50	𡽐	𡽑	𡽒	𡽓	𡽔	𡽕	𡽖	𡽗	𡽘	𡽙	𡽚	𡽛	𡽜	𡽝	𡽞	𡽟
+21F60	𡽠	𡽡	𡽢	𡽣	𡽤	𡽥	𡽦	𡽧	𡽨	𡽩	𡽪	𡽫	𡽬	𡽭	𡽮	𡽯
+21F70	𡽰	𡽱	𡽲	𡽳	𡽴	𡽵	𡽶	𡽷	𡽸	𡽹	𡽺	𡽻	𡽼	𡽽	𡽾	𡽿
+21F80	𡾀	𡾁	𡾂	𡾃	𡾄	𡾅	𡾆	𡾇	𡾈	𡾉	𡾊	𡾋	𡾌	𡾍	𡾎	𡾏
+21F90	𡾐	𡾑	𡾒	𡾓	𡾔	𡾕	𡾖	𡾗	𡾘	𡾙	𡾚	𡾛	𡾜	𡾝	𡾞	𡾟
+21FA0	𡾠	𡾡	𡾢	𡾣	𡾤	𡾥	𡾦	𡾧	𡾨	𡾩	𡾪	𡾫	𡾬	𡾭	𡾮	𡾯
+21FB0	𡾰	𡾱	𡾲	𡾳	𡾴	𡾵	𡾶	𡾷	𡾸	𡾹	𡾺	𡾻	𡾼	𡾽	𡾾	𡾿
+21FC0	𡿀	𡿁	𡿂	𡿃	𡿄	𡿅	𡿆	𡿇	𡿈	𡿉	𡿊	𡿋	𡿌	𡿍	𡿎	𡿏
+21FD0	𡿐	𡿑	𡿒	𡿓	𡿔	𡿕	𡿖	𡿗	𡿘	𡿙	𡿚	𡿛	𡿜	𡿝	𡿞	𡿟
+21FE0	𡿠	𡿡	𡿢	𡿣	𡿤	𡿥	𡿦	𡿧	𡿨	𡿩	𡿪	𡿫	𡿬	𡿭	𡿮	𡿯
+21FF0	𡿰	𡿱	𡿲	𡿳	𡿴	𡿵	𡿶	𡿷	𡿸	𡿹	𡿺	𡿻	𡿼	𡿽	𡿾	𡿿
+
+Ernest Augustus I of Hanover
+From Wikipedia, the free encyclopedia
+Ernest Augustus I
+
+Portrait by George Dawe, 1828
+King of Hanover
+Reign	20 June 1837 – 18 November 1851 (14 years, 151 days)
+Predecessor	William IV
+Successor	George V
+Duke of Cumberland and Teviotdale;
+Earl of Armagh
+Successor	George V of Hanover
+Spouse	Frederica of Mecklenburg-Strelitz
+Issue
+George V of Hanover
+House	House of Hanover
+Father	George III of the United Kingdom
+Mother	Charlotte of Mecklenburg-Strelitz
+Born	5 June 1771
+Buckingham House, London
+Died	18 November 1851 (aged 80)
+Hanover
+Burial	Herrenhausen Gardens, Hanover
+Signature	
+Ernest Augustus I (5 June 1771 – 18 November 1851) was King of Hanover from 20 June 1837 until his death. He was the fifth son and eighth child of George III, who reigned in both the United Kingdom and Hanover. As a fifth son, initially Ernest seemed unlikely to become a monarch, but Salic Law, which barred women from the succession, applied in Hanover and none of his older brothers had legitimate male issue.
+Ernest was born in England, but was sent to Hanover in his adolescence for his education and military training. While serving with Hanoverian forces in Wallonia against Revolutionary France, he received a disfiguring facial wound. In 1799, he was created Duke of Cumberland and Teviotdale. Although his 1815 marriage to the twice-widowed Frederica of Mecklenburg-Strelitz met with the disapproval of his mother, Queen Charlotte, it proved a happy relationship. By 1817, the mad King George III had only one legitimate grandchild, Princess Charlotte of Wales, and when she died in childbirth, Ernest was the senior son to be both married and not estranged from his wife. This gave him some prospect of succeeding to the British throne. However, both of his unmarried older brothers quickly married, and King George's fourth son, Edward, Duke of Kent, fathered the eventual British heir, Princess Victoria of Kent.
+Ernest was active in the House of Lords, where he maintained an extremely conservative record. There were persistent allegations (reportedly spread by his political foes) that he had murdered his valet and had fathered a son by his sister, Princess Sophia of the United Kingdom. Before Victoria succeeded to the British Throne, it was rumoured that Ernest intended to murder her and take the Throne himself. When King William IV died on 20 June 1837, Ernest ascended the Hanoverian Throne. Hanover's first ruler to reside in the kingdom since George I, he had a generally successful fourteen-year reign, but excited controversy when he dismissed the Göttingen Seven (including the two Brothers Grimm) from their professorial positions for agitating against his policies.
+Contents [hide]
+1 Early life (1771–1799)
+2 Duke of Cumberland (1799–1837)
+2.1 Military commander
+2.2 Sellis incident and Weymouth controversy
+2.3 Marriage
+2.4 Politics and unpopularity
+3 King of Hanover (1837–1851)
+3.1 Domestic affairs
+3.1.1 Constitutional controversy
+3.1.2 National development and trade; 1848 crisis
+3.2 Relations with Britain
+4 Later life, death, and memorial
+5 Ancestors
+6 References
+7 Bibliography
+[edit]Early life (1771–1799)
+
+
+
+The young Ernest Augustus by Thomas Gainsborough, 1782
+
+
+Colourized sketch of Ernest by James Gillray, 1799. Unusually, the sketch depicts Ernest's disfigured left profile; most later portraits either show his right profile or omit the disfigurement.
+Ernest Augustus, the fifth son of George III and Queen Charlotte, was born at Buckingham House, now part of Buckingham Palace on 5 June 1771. After leaving the nursery, he lived with his two younger brothers, Prince Adolphus (later Duke of Cambridge) and Prince Augustus (later Duke of Sussex), and a tutor in a house on Kew Green, near his parents' residence at Kew Palace.[1] At the age of fifteen, he and his two younger brothers were sent to the University of Göttingen, located in his father's domain of Hanover.[1] Though the King never left the United Kingdom in his life, he sent his younger sons to Germany in their adolescence. According to historian John Van der Kiste, this was done to limit the influence Ernest's eldest brother George, Prince of Wales, who was leading an extravagant lifestyle, would have over his younger brothers.[2] Prince Ernest proved an apt student, and after being tutored privately for a year, while learning German, attended lectures at the University. Though King George ordered that the princes' household be run along military lines, and that they follow university rules, the town merchants proved willing to extend credit to the princes, and all three fell into debt.[3]
+In 1790, Ernest asked his father for permission to train with Prussian forces. Instead, in January 1791, he and Prince Adolphus were sent to Hanover to receive military training under the supervision of Field Marshal Wilhelm von Freytag. Before leaving Göttingen, Ernest penned a formal letter of thanks to the university, and wrote to his father, "I should be one of the most ungrateful of men if ever I was forgetful of all I owe to Göttingen & its professors."[4]
+Ernest learned cavalry drill and tactics under Captain von Linsinger of the Queen's Light Dragoons, and proved to be an excellent horseman as well as a good shot.[5] After only two months of training, von Freytag was so impressed by the Prince's progress that he gave him a place in the cavalry as captain. Ernest was supposed to receive infantry training, but the King, also impressed by his son's prowess, allowed him to remain with the cavalry.[6]
+In March 1792, the King commissioned Prince Ernest Augustus as a colonel in the 9th Hanoverian Light Dragoons.[7] The Prince served in the Low Countries in the War of the First Coalition, under his elder brother Frederick, Duke of York, then commander of the combined British, Hanoverian and Austrian forces. Seeing action near the Walloon town of Tournai in August 1793, he sustained a sabre wound to the head,[8] which resulted in a disfiguring scar.[9] During the Battle of Tourcoing in northern France on 18 May 1794 his left arm was injured by a cannonball which passed close by him. In the days after the battle, the sight in his left eye faded. In June, he was sent to Britain to convalesce, his first stay there since 1786.[8]
+Ernest resumed his duties in early November, by now promoted to major-general.[10] He hoped his new rank would bring him a corps or brigade command, but none was forthcoming as Allied armies retreated slowly through the Netherlands towards Germany.[11] By February 1795, they had reached Hanover. Ernest remained in Hanover over the next year, at several unimportant postings. He had requested a return home to seek treatment for his eye, but it was not until early 1796 that the King agreed and allowed Ernest to return to Britain.[12] In Britain, Prince Ernest consulted the noted eye doctor, Wathen Waller, but Waller apparently found the condition inoperable, as no operation took place.[13] Once in Britain, Ernest repeatedly sought to be allowed to join British forces on the Continent, even threatening to join the Yeomanry as a private, but both the King and the Duke of York refused. Ernest did not want to rejoin Hanoverian forces, as the Hanoverians were not then involved in the fighting. In addition, von Freytag was seriously ill, and Ernest was unwilling to serve under his likely successor, General von Wallmoden.[14]
+[edit]Duke of Cumberland (1799–1837)
+
+[edit]Military commander
+
+
+1802 drawing of Ernest, Duke of Cumberland, by Henry Edridge, who has omitted Ernest's disfiguring scar.
+On 23 April 1799, George III created Prince Ernest Augustus Duke of Cumberland and Teviotdale and Earl of Armagh.[15] Though he was made a lieutenant-general, both of British and Hanoverian forces,[16] he remained in England, and, with a seat in the House of Lords, entered politics. Ernest had extreme Tory views, and soon became a leader of the right of the party.[17] King George had feared that Ernest, like some of his older brothers, would display Whig tendencies. Reassured on that point, in 1801, the King had Ernest conduct the negotiations which led to the formation of the Addington Government.[18] In February 1802, King George granted his son the colonelcy of the 27th Light Dragoons, a post which offered the option of transfer to the colonelcy of the 15th Light Dragoons when a vacancy developed. A vacancy promptly occurred and the Duke became the colonel of the 15th Light Dragoons in March 1802. Although the post could have been a sinecure, Ernest involved himself in the affairs of the regiment and led it on manoeuvres.[19]
+In early 1803, the Duke of York appointed Ernest as commander of the Severn District, in charge of the forces in and around the Severn Estuary. When war with France broke out again after the Peace of Amiens, the elder Duke appointed Ernest to the more important Southwest District, comprising Hampshire, Dorset and Wiltshire. Though Ernest would have preferred command of the King's German Legion, composed mostly of expatriates from French-occupied Hanover, he accepted the post. The Duke of Cumberland increased the defences on the South Coast, especially around the town of Weymouth, where his father often spent time in the summer.[20]
+
+
+Ernest Augustus in an 1823 miniature based on an 1802 portrait by William Beechey.
+The 1800 Acts of Union had given Ireland representation in Parliament, but existing law prevented the Irish Catholics from serving there because of their religion. "Catholic emancipation" was a major political issue of the first years of the 19th century. The Duke of Cumberland was a strong opponent of giving political rights to Catholics, believing that emancipation would be a violation of the King's Coronation Oath to uphold Anglicanism, and spoke out in the House of Lords against emancipation.[21] Protestant Irish organisations supported the Duke; he was elected Chancellor of the University of Dublin in 1805[22] and Grand Master of the Orange Lodges two years later.[23]
+The Duke repeatedly sought a post with Allied forces fighting against France, but was sent to the Continent only as an observer. In 1807, he advocated sending British troops to join with the Prussians and Swedes and attack the French at Stralsund (today, in northeastern Germany). The Greville government refused to send forces. Shortly afterwards, the government fell, and the new Prime Minister, the Duke of Portland, agreed to send Ernest with 20,000 troops. However, they were sent too late: the French defeated Prussia and Sweden at the Battle of Stralsund before Ernest and his forces could reach the town.[24]
+[edit]Sellis incident and Weymouth controversy
+In the early hours of 31 May 1810, Ernest, by his written account, was struck in the head several times while asleep in bed, awakening him. He ran for the door, where he was wounded in the leg by a sabre. He called for help, and one of his valets, Cornelius Neale, responded and aided him. Neale raised the alarm, and the household soon realised that Ernest's other valet, Joseph Sellis, was not among them, and that the door to Sellis's room was locked. The lock was forced, and Sellis was discovered with his throat freshly cut, a wound apparently self-inflicted.[25] Ernest received several serious wounds during the apparent attack, and required over a month to recover from his injuries.[26] The social reformer and anti-monarchist Francis Place managed to get on the inquest jury and became its foreman. Place went to the office of a barrister friend to study inquest law, and aggressively questioned witnesses. Place also insisted the inquest be opened to the public and press, and so cowed the coroner that he basically ran the inquest himself. Nevertheless, the jury returned a unanimous verdict of suicide against Sellis.[27]
+
+
+A George Cruikshank cartoon mocking Ernest at the 1815 defeat of his increased allowance. The brown section at lower right covers an image of the ghost of Sellis (visible if enlarged), who hints at the Duke's involvement in his death (Cruikshank self-censored most copies for fear of a libel suit).[28]
+Much of the public blamed Ernest for Sellis's death.[29] The more extreme Whig papers, anti-royal pamphleteers, and caricaturists all offered nefarious explanations for Sellis's death, in which the Duke was to blame.[30] Some stories had the Duke cuckolding Sellis, with the attack as retaliation, or Sellis killed for finding Ernest and Mrs. Sellis in bed together.[29] Others suggested that the Duke was the lover of either Sellis or Neale, and that blackmail had played a part in the death.[31] Both Roger Fulford and John Van der Kiste, who wrote books about George III's children, ascribe part of the animus and fear towards the Duke to the fact that he did not conduct love affairs in public, as did his older brothers. According to them, the public feared what vices might be going on behind the locked doors of the Duke's house, and assumed the worst.[32][33]
+In early 1813, Ernest was involved in political scandal during an election contest in Weymouth following the general election the previous year. The Duke was shown to be one of three trustees who were able to dictate who would represent Weymouth in Parliament. It being considered improper for a peer to interfere in a Commons election, there was considerable controversy, and the Government sent Ernest to Europe as an observer to accompany Hanoverian troops, which were again engaged in war against France.[34] Though he saw no action, Ernest was present at the Battle of Leipzig, a major victory for the Allies.[35]
+[edit]Marriage
+Ernest met and fell in love in mid-1813 with his first cousin, Frederica of Mecklenburg-Strelitz, wife of Frederick William, Prince of Solms-Braunfels and widow of Prince Louis of Prussia. The two agreed to wed if Frederica became free to marry. Her marriage to Frederick William had not been a success; her husband, seeing the marriage was beyond hope, agreed to a divorce, but his sudden death in 1814 removed the necessity. Some considered the death too convenient, and suspected the princess of poisoning her husband.[36] Queen Charlotte opposed the marriage: before the princess had married Frederick William, she had jilted Ernest's brother, the Duke of Cambridge, after the engagement was announced.[37]
+Following the marriage in Germany on 29 May 1815, Queen Charlotte refused to receive her new daughter-in-law,[38] nor would the Queen attend the resolemnisation of the Cumberlands' marriage at Kew, which Ernest's four older brothers attended. The Prince of Wales (now Prince Regent) found the Cumberlands' presence in Britain embarrassing, and offered him money and the Governorship of Hanover if they would leave for the Continent. Ernest refused, and the Cumberlands divided their time between Kew and St. James's Palace for the next three years. The Queen remained obstinate in her refusal to receive Frederica.[39] Despite these family troubles, the Cumberlands had a happy marriage.[40] The Government of Lord Liverpool asked Parliament to increase the Duke's allowance by ₤6,000 per year in 1815, so he could meet increased expenses due to his marriage. The Duke's involvement in the Weymouth election became an issue, and the bill failed by one vote.[41] Liverpool tried again in 1817; this time the bill failed by seven votes.[42]
+At the time of the Duke's marriage in 1815, it seemed to have little dynastic significance to Britain. Princess Charlotte of Wales, only child of the Prince Regent, was the King's only legitimate grandchild. The young Princess was expected to have children who would secure the British succession, especially after she married Prince Leopold of Saxe-Coburg-Saalfeld in 1816.[43] Both the Prince Regent and the Duke of York were married but estranged from their wives, while the next two brothers, the Dukes of Clarence and Kent, were unmarried.[44] On 6 November 1817, Princess Charlotte died after delivering a stillborn son. King George was left with twelve surviving children, and no surviving legitimate grandchildren.[45] Most of the unmarried royal dukes hurriedly sought out suitable brides and hastened to the altar, hoping to father the heir to the throne.[44]
+Seeing little prospect of the Queen giving in and receiving her daughter-in-law, the Cumberlands moved to Germany in 1818. They had difficulty living within their means in Britain, and the cost of living was much lower in Germany.[46] Queen Charlotte died on 17 November 1818, but the Cumberlands remained in Germany, living principally in Berlin, where the Duchess had relatives.[47] In 1817, the Duchess had a stillborn daughter; in 1819 she gave birth to a boy, Prince George of Cumberland. The Duke occasionally visited England, where he stayed with his eldest brother, who in 1820 succeeded to the British and Hanoverian Thrones as George IV.[48] George III's fourth son, Edward, Duke of Kent, died six days before his father, but left a daughter, Princess Victoria of Kent.[49] With the death of George III, Ernest became fourth in line to the British Throne, following the Duke of York (who would die without legitimate issue in 1827), the Duke of Clarence, and Princess Victoria.[50]
+[edit]Politics and unpopularity
+
+
+Ernest Augustus I wearing the robes of a Knight Commander of the Order of St Patrick
+In 1826, Parliament finally voted to increase Ernest's allowance. The Liverpool Government had argued that the Duke needed an increased allowance to pay for Prince George's education; even so, it was opposed by many Whigs.[51] The bill, which passed the House of Commons 120–97, required Prince George to live in England if the Duke was to receive the money.[52]
+In 1828, Ernest was staying with the King at Windsor Castle when severe disturbances broke out in Ireland among Catholics. The Duke was an ardent supporter of the Protestant cause in Ireland, and returned to Berlin in August, believing that the Government, led by the Duke of Wellington, would deal firmly with the Irish.[53] In January 1829, the Wellington Government announced that it would introduce a Catholic emancipation bill to conciliate the Irish. Disregarding a request from Wellington that he remain abroad, Ernest returned to London, and was one of the leaders against the Catholic Relief Act 1829, influencing King George against the bill.[54] Within days of his arrival, the King instructed the officers of his Household to vote against the Bill. Hearing of this, Wellington told the King that he must resign as Prime Minister unless the King could assure him of complete support. The King initially accepted Wellington's resignation, and Ernest attempted to put together a government united against Catholic emancipation. Though such a government would have considerable support in the House of Lords, it would have little support in the Commons, and Ernest abandoned his attempt. The King recalled Wellington. The bill passed the Lords and became law.[55]
+The Wellington Government hoped that Ernest would return to Germany, but he moved his wife and son to Britain in 1829. The Times reported that they would live at Windsor in the "Devil's Tower"; instead, the Duke reopened his house at Kew.[56] They settled there as rumours flew that Thomas Garth, thought to be the illegitimate son of Ernest's sister Princess Sophia, had been fathered by Ernest. It was also said that Ernest had blackmailed the King by threatening to expose this secret, though Van der Kiste points out that Ernest would have been ill-advised to blackmail with a secret which, if exposed, would destroy him.[57] These rumours were spread as Ernest journeyed to London to fight against Catholic emancipation. Whig politician and diarist Thomas Creevey wrote about the Garth rumour in mid-February, and there is some indication the rumours began with Princess Lieven, wife of the Russian ambassador.[58]
+Newspapers also reported, in July 1829, that the Duke had been thrown out of Lord Lyndhurst's house for assaulting his wife Sarah, Lady Lyndhurst.[57] In early 1830, a number of newspapers printed articles hinting that Ernest was having an affair with Lady Graves, a mother of fifteen now past fifty.[59] In February 1830, Lord Graves wrote a note to his wife expressing his confidence in her innocence, then cut his own throat. Two days after Lord Graves's death (and the day after the inquest), The Times printed an article connecting Lord Graves's death with Sellis's. After being shown the suicide note, The Times withdrew its implication there might be a connection between the two deaths. Nonetheless, many believed the Duke responsible for the suicide—or guilty of a second murder.[60] The Duke later stated that he had been "accused of every crime in the decalogue".[61] Ernest's biographer, Anthony Bird, states that while there is no proof, he has no doubt that the rumours against the Duke were spread by the Whigs for political ends.[62] Another biographer, Geoffrey Willis, pointed out that no scandal had attached itself to the Duke during the period of over a decade when he resided in Germany; it was only when he announced his intent to return to Britain that "a campaign of unparalleled viciousness" began against him.[63] According to Bird, Ernest was the most unpopular man in England.[64]
+
+
+Political cartoon supporting the Reform Act; King William sits above the clouds, surrounded by Whig politicians, below Britannia and the British Lion cause the Tories (Ernest, second from left) to flee.
+The Duke's influence at Court was ended by the death of George IV in June 1830 and the succession of the Duke of Clarence as William IV. Wellington wrote that "The effect of the King's death will ... be to put an end to the Duke of Cumberland's political character and power in this country entirely".[65] King William lacked legitimate children (two girls having died in infancy)[50] and Ernest was now heir in Hanover, since the British heir, Victoria, as a female could not inherit there. William realized that so long as the Duke maintained a power base at Windsor, he could wield unwanted influence. The Duke was Gold Stick as head of the Household Cavalry; William made the Duke's post responsible to the Commander in Chief rather than to the King, and an insulted Ernest, outraged at the thought of having to report to an officer less senior than himself, resigned. King William again emerged triumphant when the new Queen, Adelaide of Saxe-Meiningen, wished to quarter her horses in the stables customarily used by the consort, but which were then occupied by Ernest's horses. Ernest initially refused the King's order to remove the horses, but gave in when told that William's grooms would remove them if Ernest did not move them voluntarily.[65] However, Ernest and William remained friendly throughout the latter's seven-year reign.[66] Ernest's house at Kew was too small for his family; the King gave the Duke and Duchess lifetime residence in a nearby, larger house by the entrance to Kew Gardens.[67] Ernest opposed the Reform Act 1832, and was one of the "diehard" peers who voted against the bill on its final reading when most Tories abstained under threat of seeing the House of Lords flooded with Whig peers.[68]
+Ernest was the subject of more allegations in 1832, when two young women accused him of trying to ride them down as they walked near Hammersmith. The Duke had not left his grounds at Kew on the day in question, and was able to ascertain that the rider was one of his equerries, who professed not to have seen the women. Nevertheless, newspapers continued to print references to the incident, suggesting that Ernest had done what the women stated, and was cravenly trying to push blame on another. The same year, the Duke sued for libel after a book appeared accusing him of having his valet Neale kill Sellis, and the jury found against the author.[69] Also in 1832, the Cumberlands suffered tragedy, as young Prince George went blind. The Prince had been blind in one eye from infancy; an accident at age thirteen took the sight of the other. Ernest had hoped his son might marry Princess Victoria and keep the British and Hanoverian Thrones united, but the handicap made it unlikely George could win Princess Victoria's hand, and raised questions about whether he should succeed in Hanover.[70]
+The Duke spent William's reign in the House of Lords, where he was assiduous in his attendance. Wrote newspaper editor James Grant, "He is literally—the door-keeper of course excepted—the first man in the House, and the last out of it. And this not merely generally, but every night."[71] Grant, in his observations of the leading members of the House of Lords, indicated that the Duke was not noted for his oratory (he delivered no speech longer than five minutes) and had a voice that was difficult to understand, though, "his manner is most mild and conciliatory."[71] Grant denigrated the Duke's intellect and influence, but stated that the Duke had indirect influence over several members, and that, "he is by no means so bad a tactician as his opponents suppose."[72]
+Controversy arose in 1836 over the Orange Lodges. The lodges (which took anti-Catholic views) were said to be ready to rise and try to put the Duke of Cumberland on the Throne on the death of King William. According to Joseph Hume, speaking in the House of Commons, Princess Victoria was to be passed over on the grounds of her age, sex, and incapacity.[73] The Commons passed a resolution calling for the dissolution of the lodges. When the matter reached the Lords, the Duke defended himself, saying of Princess Victoria, "I would shed the last drop of my blood for my niece."[74] The Duke indicated that the Orange Lodge members were loyal and were willing to dissolve the lodges in Great Britain. According to Bird, this incident was the source of the widespread rumours that the Duke intended to murder Princess Victoria and take the British Throne for himself.[75]
+[edit]King of Hanover (1837–1851)
+
+[edit]Domestic affairs
+[edit]Constitutional controversy
+On 20 June 1837, King William died, and Princess Victoria became Queen of the United Kingdom. Ernest became the King of Hanover. On 28 June 1837, King Ernest entered his new domain, passing under a triumphal arch.[76] For the first time in over a century, Hanover would have a ruler living there.[77] Many Hanoverians were of a liberal perspective, and would have preferred the popular viceroy, the Duke of Cambridge, to become king, but both of Ernest's younger brothers refused to lend themselves to any movement by which they would become king rather than their elder brother. According to Roger Fulford in his study of George III's younger sons, Royal Dukes, "In 1837, King Ernest was the only male descendant of George III who was willing and able to continue the connection with Hanover."[78]
+
+
+1846 thaler coin depicting King Ernest Augustus
+Hanover had received its first constitution, granted by the Prince Regent, in 1819; this did little more than denote Hanover's change from an electorate to a kingdom, granted by the Congress of Vienna. The Duke of Cambridge, as King William's viceroy in Hanover, recommended a thorough reorganisation of the Hanoverian government. William IV had given his consent to a new constitution in 1833; the Duke of Cumberland's consent was neither asked nor received, and he had formally protested against the constitution's adoption without his consent.[79] One provision of the constitution transferred the Hanoverian Domains (the equivalent of the British Crown Estate) from the sovereign to the state, eroding the monarch's power.[76]
+Immediately upon his arrival in Hanover, the King dissolved the parliament which had been convened under the disputed constitution. On 5 July, he proclaimed the suspension of the constitution, on the ground that his consent had not been asked, and that it did not meet the kingdom's needs.[79] On 1 November 1837, the King issued a patent, declaring the constitution void, but upholding all laws passed under it.[80] The 1819 constitution was restored. The Crown Prince, Prince George, endorsed the action.[81]
+In carrying the King's patent into effect, the Cabinet required all officeholders (including professors at Göttingen University) to renew their oaths of allegiance to the King. Seven professors (including the two Brothers Grimm) refused to take the oaths, and agitated for others to protest against the King's decree. Since they did not take the oaths, the seven lost their positions, and the King expelled the three most responsible (including Jacob Grimm) from Hanover.[80] Only one of the seven, orientalist Heinrich Ewald was a citizen of Hanover and he was not expelled.[82] In the final years of the King's reign, the three were invited to return.[83]
+The King wrote of the incident to his brother-in-law, Frederick William III of Prussia, "If each of these seven gentlemen had addressed a letter to me expressing his opinion, I would have had no cause to take exception to their conduct. But to call a meeting and publish their opinions even before the Government had received their protest—that is what they have done and that I cannot allow."[84] Ernest received a deputation of Göttingen citizens, who, fearing student unrest, applauded the dismissals. However, he was widely criticised in Europe, especially in Britain.[85] In the House of Commons, MP Colonel Thomas Perronet Thompson proposed to Parliament that if the as-yet-childless Queen Victoria died, making Ernest the British King, Parliament should declare that King Ernest had forfeited all rights to the British Throne by his actions.[86]
+A more significant protest against the revocation of the 1833 constitution was the refusal of a number of towns to appoint parliamentary deputies. However, by 1840, a sufficient number of deputies had been appointed for the King to summon Parliament, which met for two weeks in August, approving a modified version of the 1819 constitution, passing a budget, and sending a vote of thanks to the King. The Parliament met again the following year, passed a three-year budget, and adjourned again.[87]
+[edit]National development and trade; 1848 crisis
+At the time the King took the throne, the city of Hanover was a densely packed residential town, and did not rise to the grand style of many German capitals. Once the political crises of the first years of his reign had subsided, he set out to remedy this state of affairs.[88] Ernest's support led to gas lighting in the city streets of Hanover, up-to-date sanitation and the development of a new residential quarter. He had the plans altered in 1841, after Queen Frederica's death, to leave standing the Altes Palais, where the two had lived since arriving in Hanover.[40] Ernest's interest in and support of the railroads led to Hanover becoming a major rail junction, much to the nation's benefit.[40] However, when court architect Georg Ludwig Friedrich Laves in 1837 proposed the building of an opera house in Hanover, the King initially refused, calling the proposal "this utterly absurd idea of building a court theatre in the middle of this green field".[89] The King finally gave his consent in 1844, and the opera house opened in 1852, a year after the King's death.[89]
+
+
+Ernest Augustus portrait, circa 1850
+Every week, the King travelled with his secretary to different parts of his kingdom, and anyone could lay a petition before him—although Ernest had petitions screened by the secretary so he would not have to deal with frivolous complaints.[90] Ernest opened high ministerial positions to those of any class, securing the services of several ministers who would not have been eligible without this reform.[91] Though the King had, while Duke of Cumberland, fought against Catholic emancipation, he made no objection to Catholics in government service in Hanover, and even visited their churches. Ernest explained this by stating that there were no historical reasons to restrict Catholics in Hanover, and there had been in the United Kingdom.[92] He continued to oppose admission of Jews into the British Parliament, but gave Jews in Hanover equal rights.[93]
+The King supported a postal union and common currency among the German states, but opposed the Prussian-led customs union, the Zollverein, fearing that it would lead to Prussian dominance and the end of Hanover as an independent state. Instead, the King supported the Steuerverein, which Hanover and other western German states had formed in 1834. When the Steuerverein treaties came up for renewal in 1841, Brunswick pulled out of the union and joined the Zollverein, greatly weakening Hanover's position, especially since Brunswick had enclaves within Hanover. Ernest was able to postpone the enclaves' entry into the Zollverein, and when a trade war began, was able to outlast Brunswick. In 1845, Brunswick, Hanover, and Prussia signed a trade agreement. In 1850, Ernest reluctantly permitted Hanover to join the Zollverein, though the entry was on favourable terms.[94] Ernest's forebodings about Prussia were warranted; in 1866, fifteen years after his death, Hanover chose the Austrian side in the Austro-Prussian War, was defeated, and was annexed by Prussia.[95]
+Hanover was little affected by the revolutions of 1848; a few small disturbances were put down by the cavalry without bloodshed.[96] When agitators arrived from Berlin at the end of May 1848, and there were demonstrations outside the King's palace, Ernest sent out the Prime Minister. The Prime Minister warned that if the demonstrators made any inappropriate demands on the King, Ernest would pack up his things and leave for Britain, taking the Crown Prince with him. This would leave the country to the mercy of expansionist Prussia, and the threat put an end to the agitation. Afterwards, the King granted a new constitution, somewhat more liberal than the 1819 document.[97]
+[edit]Relations with Britain
+
+
+British "To Hanover" token or "Cumberland Jack," marking Ernest's departure from Britain. These pieces were struck through much of the 19th century as whist counters and were sometimes passed as real gold coins to the unwary.[98]
+British Royalty
+House of Hanover
+
+George III
+   George IV
+   Frederick, Duke of York
+   William IV
+   Charlotte, Queen of Württemberg
+   Edward, Duke of Kent
+   Princess Augusta Sophia
+   Elizabeth, Landgravine of Hesse-Homburg
+   Ernest Augustus I of Hanover
+   Augustus Frederick, Duke of Sussex
+   Adolphus, Duke of Cambridge
+   Mary, Duchess of Gloucester
+   Princess Sophia
+   Prince Octavius
+   Prince Alfred
+   Princess Amelia
+Grandchildren
+   Charlotte, Princess Leopold of Saxe-Coburg-Saalfeld
+   Princess Charlotte of Clarence
+   Princess Elizabeth of Clarence
+   Victoria
+   George V, King of Hanover
+   George, Duke of Cambridge
+   Augusta, Grand Duchess of Mecklenburg-Strelitz
+   Mary Adelaide, Duchess of Teck
+Ernest Augustus is supposed to have asked the advice of the Duke of Wellington as to what course he should take after Victoria's accession, with Wellington supposedly saying "Go before you are pelted out."[99] However, Bird dismisses this story as unlikely, given Wellington's customary respect to royalty and the fact that Ernest had little choice in what to do—he had to repair to his kingdom as quickly as possible.[100] One decision the new King did have to make was whether, in his capacity as Duke of Cumberland, to swear allegiance to Victoria in the House of Lords. Shortly after William's death, Ernest heard from Lord Lyndhurst that Lord Cottenham, the Lord Chancellor, had stated that he would refuse to administer the Oath of Allegiance to the King, as a foreign Sovereign. The King hurriedly appeared in the House of Lords, before his departure for Hanover, and subscribed to the Oath before the Chief Clerk as a matter of routine.[101] Ernest was heir presumptive to his niece until the birth of Queen Victoria's daughter, also named Victoria, in November 1840. The Lord Privy Seal, Lord Clarendon, wrote, "What the country cares about is to have a life more, whether male or female, between the succession and the King of Hanover."[102]
+Almost immediately upon going to Hanover, the King became involved in a dispute with his niece. Victoria, who had a strained relationship with her mother, the Duchess of Kent, wanted to give the Duchess accommodation near her, for the sake of appearances—but not too near her. To that end, she asked the King to give up his apartments at St. James's Palace in favour of the Duchess. The King, wishing to retain apartments in London in anticipation of frequent visits to England, and reluctant to give way in favour of a woman who had frequently fought with his brother, King William, declined, and Victoria angrily rented a house for her mother. At a time when the young Queen was trying to pay off her father's debts, she saw this as unnecessary expense.[103] Her ill-feeling towards the King increased when he refused, and advised his two surviving brothers to similarly refuse, to give precedence to her intended spouse, Albert of Saxe-Coburg and Gotha. Ernest argued that the standing of the various royal families had been settled at the Congress of Vienna, and the King of Hanover should not have to yield to one whom he described as a "paper Royal Highness".[104] The act which naturalised Albert as a British subject left the question of his precedence unresolved.[104]
+Matters came to a head when Ernest returned for what would prove to be his only visit to England as King of Hanover, in 1843. He was welcomed warmly, everywhere but at the Palace.[105] At the wedding of Princess Augusta of Cambridge, he attempted to insist on a superior place to that of Prince Albert. The 50-years-younger prince settled things with what Albert described as a "strong push," and carefully wrote his name on the certificate under the Queen's, so close to his wife's as to leave no space for the King's signature.[106] The King apparently held no grudge, as he invited the Prince for a stroll in the park. When Albert demurred on the grounds that they might be jostled by crowds, the King replied, "When I lived here I was quite as unpopular as you are and they never bothered me."[107] Shortly after the wedding, the King injured himself in a fall, with Albert writing to his brother, "Happily he fell over some stones in Kew and damaged some ribs." This injury spared him further contact with Victoria and Albert.[108] During his visit, the King found time to take his place as Duke of Cumberland in the House of Lords. Victoria recorded in her journal that the King had stated when asked if he would speak in the Lords, "No, I shall not, unless the Devil prompts me!"[109] The Queen also recorded that though King Ernest greatly enjoyed listening to the debates, he did not himself speak.[109]
+The monarchs engaged in one more battle—over jewels left by Queen Charlotte. Victoria, who possessed them, took the position that they belonged to the British Crown. King Ernest maintained that they were to go to the heir male, that is, himself. The matter was arbitrated, and just as the arbitrators were about to announce a decision in Hanover's favour, one of the arbitrators died, voiding the decision. Despite the King's request for a new panel, Victoria refused to permit one during the King's lifetime, and took every opportunity to wear the jewels, causing the King to write to his friend, Lord Strangford, "The little Queen looked very fine, I hear, loaded down with my diamonds." The King's son and heir, King George V, pressed the matter, and in 1858, after another decision in Hanover's favour, the jewels were turned over to the Hanoverian ambassador.[110]
+The King made a point of welcoming British visitors, and when one Englishwoman told him that she had been lost in the city, the King denied that this was possible, as "the whole country is no larger than a fourpenny bit."[111]
+[edit]Later life, death, and memorial
+
+
+
+Statue of Ernest Augustus I in front of the Hannover Hauptbahnhof. Most bystanders are "under the tail".
+In 1851, the King undertook a number of journeys around Germany. He accepted an invitation from the Prussian Queen to visit Charlottenburg Palace, near Berlin.[112] He visited Mecklenburg for the christening of the Grand Duke's son, and Luneburg to inspect his old regiment. In June Ernest celebrated his 80th birthday by playing host to the King of Prussia. Late that summer, he visited Göttingen, where he opened a new hospital and was given a torchlight procession.[113]
+The King continued his interest in British affairs, and wrote to Lord Strangford about the Great Exhibition of 1851:
+The folly and absurdity of the Queen in allowing this trumpery must strike every sensible and well-thinking mind, and I am astonished the ministers themselves do not insist on her at least going to Osborne during the Exhibition, as no human being can possibly answer for what may occur on the occasion. The idea ... must shock every honest and well-meaning Englishman. But it seems everything is conspiring to lower us in the eyes of Europe.[114]
+The King died on 18 November 1851 after an illness of about a month. He was mourned greatly in Hanover; less so in England where The Times omitted the customary black border to its front page and claimed "the good that can be said of the Royal dead is little or none."[115] Both he and Queen Frederica rest in a mausoleum in the Herrenhausen Gardens.[116]
+A large equestrian statue of King Ernest Augustus may be found in a square named after him in front of the railway station in Hanover, inscribed with his name and the words (in German) "To the father of the nation from his loyal people." It is a popular meeting place; in the local phrase, people arrange to meet unterm Schwanz or "under the tail" (that is, of the horse which the King rides).[117]
+Although The Times denigrated Ernest's career as Duke of Cumberland, it did speak well of his time as King of Hanover, and of his success in keeping Hanover stable in 1848:
+Above all, he possessed a resolute decision of character, which, however unfortunately it may have operated under different conditions, appeared to extraordinary advantage at the crisis of continental thrones. Bewildered by the revolutionary din, and oscillating ignominiously between fear and rage, resistance and concession, the clique of crowned heads suffered greatly by contrast with a Sovereign who at least knew his own mind, and was prepared to abide by his opinions. In the European convulsions, therefore, King Ernest maintained the stability of his throne and the tranquillity of his people without damage from revolution or reaction. As Kings, indeed, are computed on the continent, he was an able and even a popular Monarch, and his memory may find, perhaps, in his ancestral dominions a sympathy which it would be vain to bespeak for it in the scenes of his manhood or the land of his birth.[118]
+
+William McGregor
+From Wikipedia, the free encyclopedia
+For the Canadian businessman and political figure, see William McGregor (politician)
+For the Governor of Newfoundland and Governor of Queensland, see William MacGregor.
+William McGregor
+
+William McGregor, founder of the Football League
+Born	13 April 1846
+Braco, Perthshire
+Died	20 December 1911 (aged 65)
+Birmingham
+Nationality	Scottish
+Occupation	Draper, Director of Aston Villa
+Spouse	Jessie McGregor[1]
+Children	William McGregor, Jessie McGregor
+William McGregor (13 April 1846 – 20 December 1911)[1][2] was an association football administrator in the Victorian era, who is regarded as the founder of the Football League, the first organised football league in the world.
+After moving from Perthshire to Birmingham to set up business as a draper, McGregor became involved with local football club Aston Villa, which he helped to establish as one of the leading teams in England. He served the club for over twenty years in various capacities, including president, director and chairman. In 1888, frustrated by the regular cancellation of Villa's matches, McGregor organised a meeting of representatives of England's leading clubs, which led to the formation of the Football League, giving member clubs a guaranteed fixture list each season. This was instrumental in the transition of football from an amateur pastime to a professional business.
+McGregor served as both chairman and president of the Football League and was also chairman of the Football Association (the FA). He was recognised by the FA for his service to the game shortly before his death in 1911, and was posthumously honoured by the local football authorities and Aston Villa.
+Contents [hide]
+1 Personal life
+2 Association with Aston Villa
+3 Founder of the Football League
+4 Death and legacy
+5 Notes
+6 References
+[edit]Personal life
+
+Born in Braco in Perthshire, Scotland, McGregor first became interested in football after watching a match between locals and visiting artisans at Ardoch.[3][4] He served an apprenticeship as a draper in Perth, and in 1870, following the example of his brother Peter, moved to Birmingham,[4][5] and opened his own drapery business in Aston, an area just outside the city.[6] Upon his arrival in the Midlands he became involved with a local football club, Calthorpe, which had been formed by a fellow Scot, Campbell Orr.[4][7] McGregor was enthusiastic enough about the game to arrange for his shop to close early on Saturdays to allow him to watch matches, and he later sold football kits at the shop, which became a popular meeting place for football enthusiasts.[7]
+McGregor was married to Jessie, and the couple had a daughter and a son, also named Jessie and William.[7][8] A teetotaller, McGregor was a supporter of the Temperance movement,[9] and was active in the local branch of the Liberal Party until his membership lapsed in 1882 due to the increasing amount of time he devoted to football.[10] He was involved in the early attempts to establish a baseball league in the UK, and serving as the honorary treasurer of the Baseball Association of Great Britain and Ireland.[11] Despite his commitment to sport, he retained his drapery business throughout his life.[12]
+[edit]Association with Aston Villa
+
+
+
+The Aston Villa team of 1896–97 with the First Division Championship and the FA Cup
+In 1877, McGregor was invited to become a committee member of Aston Villa, a club formed three years earlier. He also umpired matches for the club.[A][7][13] At the time the club played at Aston Park, close to the premises of McGregor's business.[14] He became interested in joining Villa due to the strong Scottish contingent in the club's ranks,[4] the team's exciting style of play, and the club's connection to a Wesleyan Chapel.[15] He quickly assumed the post of club administrator,[2] helping the impecunious club to survive its financial troubles. After some of Aston Villa's possessions were seized by bailiffs, McGregor allowed the club to use his shop as a store to prevent further seizures.[15] Under McGregor's leadership, Aston Villa won their first trophy, the Birmingham Senior Cup, in 1880,[16] shortly after which McGregor became the club's president.[2]
+The following year McGregor became a member of the club's board of directors.[2] Villa's standing within the game continued to grow, and in 1887 the club became the first from the Midlands to win the FA Cup, defeating local rivals West Bromwich Albion in the final.[17] In 1895, McGregor became vice-chairman, and went on to become the club's chairman in 1897.[2] During his time at the club he was noted for his organisational skills and ambition,[18] and was responsible for adopting the lion rampant depicted on the Royal Standard of Scotland, as the club's crest.[19]
+[edit]Founder of the Football League
+
+As the 1880s progressed, the balance of power within English football began to change. The first national competition, the FA Cup, had previously been dominated by amateur clubs from privileged backgrounds, such as Wanderers and Old Etonians. However the 1883 FA Cup Final saw the first victory by a working-class team, Blackburn Olympic.[20] At this time professionalism was not permitted. Clubs from urban areas in the north were strong advocates of the practice, but the southern amateur teams and the FA authorities were firmly opposed.[20] Though not initially an advocate of professionalism, McGregor came to favour its introduction.[10] By 1885 the issue threatened to split the FA when a group of clubs, predominantly from Lancashire, announced their intention to leave and form a rival British Football Association if professionalism was not accepted.[20] An emergency FA conference was called in response. Representing Aston Villa, McGregor spoke in favour of professionalism, the only delegate from the Midlands to do so, and was one of the few delegates to admit that his club had been paying players.[10] Though not as outspoken as stronger proponents, such as Preston North End's William Sudell, McGregor was well respected.[10] The conference ended with the FA accepting professionalism, although each club was permitted only to pay players who had been born or lived for at least two years within six miles of its home stadium.[20]
+Professionalism brought fresh complications for club administrators. Many friendlies were cancelled due to opponents' FA Cup or county cup matches taking precedence or clubs simply failing to honour a fixture in favour of a more lucrative match elsewhere. This made it hard for the clubs to pay players' wages on a regular basis.[21][22] McGregor took action after seeing Villa matches cancelled, to the increasing frustration of the club's fans, on five consecutive Saturdays.[22] On 2 March 1888,[23] he wrote to the committee of his own club, Aston Villa, as well as to those of Blackburn Rovers, Bolton Wanderers, Preston North End and West Bromwich Albion,[24] suggesting the creation of a league competition that would provide a number of guaranteed fixtures for its member clubs each season.[25] Corinthian F.C. founder N. Lane Jackson, writing in 1899, stated that McGregor took his inspiration from the existing league set-up used in American baseball,[11] although McGregor himself cited the County Cricket Championship as his inspiration.[26] McGregor's letter to the clubs read:[25]
+Every year it is becoming more and more difficult for football clubs of any standing to meet their friendly engagements and even arrange friendly matches. The consequence is that at the last moment, through cup-tie interference, clubs are compelled to take on teams who will not attract the public.
+I beg to tender the following suggestion as a means of getting over the difficulty: that ten or twelve of the most prominent clubs in England combine to arrange home-and-away fixtures each season, the said fixtures to be arranged at a friendly conference about the same time as the International Conference.
+This combination might be known as the Association Football Union, and could be managed by representative from each club. Of course, this is in no way to interfere with the National Association; even the suggested matches might be played under cup-tie rules. However, this is a detail.
+My object in writing to you at present is merely to draw your attention to the subject, and to suggest a friendly conference to discuss the matter more fully. I would take it as a favour if you would kindly think the matter over, and make whatever suggestions you deem necessary. I am only writing to the following – Blackburn Rovers, Bolton Wanderers, Preston North End, West Bromwich Albion, and Aston Villa, and would like to hear what other clubs you would suggest.
+I am, yours very truly, William McGregor (Aston Villa F.C.)
+P.S. How would Friday, 23rd March, 1888, suit for the friendly conference at Anderton's Hotel, London?
+McGregor chose 23 March as the date of his proposed meeting because it was the day before the FA Cup final and representatives of the country's top clubs would be in London.[22] Representatives from ten clubs attended, including the FA Cup finalists West Bromwich Albion and Preston North End,[27] but it quickly became clear that clubs from the South of England were not interested in McGregor's proposal and none attended. A second meeting was held in Manchester on 17 April, and details concerning the new competition were finalised.[21] McGregor's suggested name for the competition, "The Association Football Union" was rejected as too similar to that of the Rugby Football Union and "The Football League" was chosen, despite McGregor's opposition on the grounds that he felt it might invoke associations with the unpopular Irish Land League.[28] The term English League was avoided, to leave the possibility of future applications from Scottish clubs.[29] McGregor also proposed a rule that only one club from each town should be included. The other founders agreed to this rule, which caused controversy, as it meant Birmingham team Mitchell St. George's were denied membership in favour of McGregor's Aston Villa.[27] Twelve clubs kicked off the first season of League football in September 1888.[30]
+
+
+John Bentley, McGregor's successor as Football League president, criticised McGregor for his failure to attend many meetings during his later spell as League president.
+McGregor served as the first chairman of the League's Management Committee. One of the committee's main jobs was handling issues of discipline, but committee members were not barred from involvement in decisions involving their own clubs. In fact, the first disciplinary meeting saw fines issued to three of the four clubs with representatives on the committee.[31] McGregor was re-elected unopposed in 1891. Earlier he had spoken of his pleasure that "of the 132 matches in which the League clubs have taken part and in which about 300 players have taken the field, not a single fatal accident has to be recorded".[32] A year later he oversaw the expansion of the Football League into two divisions when the rival Football Alliance was merged into the competition, but he relinquished his post later that year due to ill health, which caused him to miss meetings.[33]
+After stepping down as chairman, he was unanimously elected to an honorary position of president, a role he kept until 1894, and was named the first-ever life member of the League in 1895.[34] The role was that of a figurehead with little actual authority, but he was used as a mediator to resolve league disagreements.[35] In the second half of the decade McGregor's failure to attend many committee meetings led to criticism from John Bentley, his successor as president. Bentley's criticism achieved the desired effect; from 1899 until his health deteriorated in 1910, McGregor seldom missed a meeting.[36] During this period McGregor was noted for his reserved nature. He was silent for large parts of committee meetings, but would contribute enthusiastically on the occasions he felt his input was necessary.[35]
+Between 1888 and 1894 McGregor also served as chairman of The Football Association (the FA), English football's overall governing body, which had existed since 1863.[2] He became known as a football celebrity, writing a weekly column for the Birmingham Gazette and endorsing products such as footballs,[7][35] and a type of football boot which the manufacturer billed as the "McGregor lace-to-toe boot".[37] Though he held many different administrative posts in his lifetime, McGregor never played the sport competitively; his only on-pitch involvement was occasional goalkeeping during Aston Villa practices in the 1870s.[15]
+[edit]Death and legacy
+
+
+
+The statue of McGregor outside Villa Park
+Although McGregor envisaged the League as a friendly union, within which clubs would share ticket revenues and work together in their mutual best interests, the immediate effect of its creation was that football came to be treated as a business for the first time, as opposed to something that players and officials simply regarded as a pastime.[11][22] All the clubs involved experienced significant increases in their turnover, which at Aston Villa, McGregor's own club, increased more than sixfold between 1889 and 1899.[11][22] The wages paid to players, however, remained low due to restrictions imposed by the FA, so clubs were able to use their increased profitability to build larger stadiums and accommodate ever larger crowds of spectators.[38] Although the League initially contained a small number of clubs, all of which were based in the northern half of the country, by the early years of the twentieth century it included clubs from all parts of England. At its peak nearly 100 clubs played in the Football League, and it remained the pre-eminent competition in English football until the 1990s, when the top clubs broke away to form the Premier League.[39] In keeping with McGregor's views on mutual support and co-operation, gate receipts were shared amongst the clubs until the 1980s, which helped to ensure that a select few wealthy clubs were not able to dominate the competition.[40] McGregor himself had little interest in the business aspect of football, and was adamant that the Football League should not challenge the longstanding authority of the FA.[11] The success of the Football League directly inspired the creation of similar competitions in other countries, beginning with Scotland, where the Scottish Football League was formed in 1890.[41]
+In May 1910, McGregor was taken ill and later confined to a nursing home.[12] His condition worsened towards the end of 1911. His last public appearance was a committee meeting on 4 December,[37] and he underwent an operation on 19 December. However, after a brief improvement in his condition he relapsed and died the following day.[42] Although a devout Methodist,[12] he is buried in the grounds of a Church of England church, St. Mary's, in the Handsworth district of Birmingham, alongside his wife, who died in 1908.[1] McGregor is remembered as the "father of The Football League",[43] an Aston Villa legend, and a legend of football in general.[44]
+Shortly before his death, the FA presented McGregor, who was at that time a vice-president of the association, with a long service medal.[7][45] After his death, Aston Villa dedicated a bed in the children's ward of one of Birmingham's hospitals in his honour, and the Birmingham County Football Association unveiled a commemorative drinking fountain, which is now preserved at Villa Park, current home of his former club.[12] In the modern era, Aston Villa selected him as one of the twelve inaugural members of its Hall of Fame,[14] and named a hospitality suite at Villa Park after him.[46] In 2008, the Aston Villa Supporters' Trust announced plans to further honour him with a bronze statue outside the stadium.[6][47] The statue will be displayed outside the Directors' Entrance of the Trinity Road Stand, and was unveiled on 28 November 2009.[48]
+
+Wikipedia:Featured articles
+From Wikipedia, the free encyclopedia
+Featured articles in Wikipedia
+
+Featured articles are considered to be the best articles in Wikipedia, as determined by Wikipedia's editors. Before being listed here, articles are reviewed at featured article candidates for accuracy, neutrality, completeness, and style according to our featured article criteria. There are 3,066 featured articles out of 3,437,399 articles on the English Wikipedia. Thus, about one in 1,120 articles is listed here. Articles that no longer meet the criteria can be proposed for improvement or removal at featured article review.
+A small bronze star icon () on the top right corner of an article's page indicates that the article is featured, unless the appropriate user preference is set. Additionally, if the current article is featured in another language version, a star will appear next to the language page link, in the list on the left of the page (see also featured articles in other languages).
+Random featured article
+Shortcut:
+WP:FA
+Featured content:
+Featured articles ←
+Featured lists
+Featured pictures
+Featured sounds
+Featured portals
+Featured topics
+Featured article tools:
+Featured article criteria
+Featured article candidates
+Featured article review
+Today's featured article
+This month's queue
+Main page requests
+Today's featured article statistics
+Featured article log
+Featured article statistics
+Former featured articles
+Contents
+Art, architecture and archaeology · Awards, decorations and vexillology · Biology · Business, economics and finance · Chemistry and mineralogy · Computing · Culture and society · Education · Engineering and technology · Food and drink · Geography and places · Geology and geophysics · Health and medicine · History · Language and linguistics · Law · Literature and theatre · Mathematics · Media · Meteorology · Music · Philosophy and psychology · Physics and astronomy · Politics and government · Religion, mysticism and mythology · Royalty, nobility and heraldry · Sport and recreation · Transport · Video gaming · Warfare
+Art, architecture and archaeology
+
+7 World Trade Center · Acra (fortress) · Angkor Wat · Anthony Roll · Bronwyn Bancroft · The Battle of Alexander at Issus · Felice Beato · Belton House · Bodiam Castle · Borobudur · Boydell Shakespeare Gallery · Bramall Hall · Matthew Brettingham · Brougham Castle · Buildings and architecture of Bristol · Buildings of Jesus College, Oxford · Buildings of Nuffield College, Oxford · Bruce Castle · Sir William Bruce, 1st Baronet, of Balcaskie · Buckingham Palace · Campbell's Soup Cans · Castle · Catherine de' Medici's building projects · Chicago Board of Trade Building · Clemuel Ricketts Mansion · Cloud Gate · Cottingley Fairies · Crown Fountain · Deconstructivism · Lisa del Giocondo · The Disasters of War · John Douglas (architect) · Dürer's Rhinoceros · El Greco · El Lissitzky · Eshmun Temple · Exelon Pavilions · An Experiment on a Bird in the Air Pump · Adolfo Farsari · Fort Ticonderoga · Fountain of Time · The Four Stages of Cruelty · Four Times of the Day · Freedom Monument · Caspar David Friedrich · Funerary art · Funerary Monument to Sir John Hawkwood · The Garden of Earthly Delights · Greece runestones · Harris Theater (Chicago, Illinois) · Heian Palace · Ima Hogg · Holkham Hall · House with Chimaeras · Hoxne Hoard · Hoysala architecture · IG Farben Building · Jay Pritzker Pavilion · Joseph Priestley House · Paul Kane · André Kertész · Las Meninas · Lindow Man · Maiden Castle, Dorset · Mary Rose · McCormick Tribune Plaza & Ice Rink · Michigan State Capitol · Millennium Park · Henry Moore · Sylvanus Morley · Benjamin Mountfort · Museum of Bad Art · Wintjiya Napaltjarri · Makinti Napanangka · Norton Priory · Oregon State Capitol · Palazzo Pitti · Palladian architecture · Robert Peake the elder · I. M. Pei · Pennsylvania State Capitol · Francis Petre · Point Park Civic Center · Portrait of a Lady (van der Weyden) · Prince's Palace of Monaco · Minnie Pwerle · Queluz National Palace · Quiriguá · The Raft of the Medusa · Restoration of the Sistine Chapel frescoes · Rokeby Venus · Rosetta Stone · Pierre Rossier · Royal Gold Cup · Sanssouci · Scottish Parliament Building · Shrine of Remembrance · Sicilian Baroque · St. Michael's Golden-Domed Monastery · Stanford Memorial Church · Statue of Liberty · The Swimming Hole · Takalik Abaj · Tech Tower · Templon · The Third of May 1808 · Three Studies for Figures at the Base of a Crucifixion · Tomb of Antipope John XXIII · Tower of London · Triptych, May–June 1973 · Trump International Hotel and Tower (Chicago) · Vasa (ship) · Roman Vishniac · Warwick Castle · West Wycombe Park · Western Chalukya architecture · Rudolf Wolters · John Michael Wright
+Awards, decorations and vexillology
+
+Eagle Scout (Boy Scouts of America) · Flag of Armenia · Flag of Australia · Flag of Belarus · Flag of Canada · Flag of Germany · Flag of Hong Kong · Flag of India · Flag of Japan · Flag of Lithuania · Flag of Mexico · Flag of Portugal · Flag of Singapore · Hero of Belarus · Hero of Ukraine · History of merit badges (Boy Scouts of America) · Medal of Honor · National emblem of Belarus · Order of the Bath · Order of Canada · Order of the Garter · Order of St. Patrick · Order of the Thistle · Victoria Cross · Victoria Cross (Canada) · Victoria Cross for Australia · Victoria Cross for New Zealand · Wood Badge
+Biology
+
+Acrocanthosaurus · Ailanthus altissima · Aiphanes · Albatross · Albertosaurus · Allosaurus · Alpine Chough · Amanita bisporigera · Amanita muscaria · Amanita ocreata · Amanita phalloides · Ambondro mahabo · American Goldfinch · Andalusian horse · Andean Condor · Ant · Antbird · Archaea · Archaeopteryx · Arctic Tern · Armillaria gallica · Armillaria luteobubalina · Australian Green Tree Frog · Australian Magpie · Babakotia · Bacteria · Bald Eagle · Banker horse · Banksia aemula · Banksia brownii · Banksia cuneata · Banksia epica · Banksia ericifolia · Banksia integrifolia · Banksia menziesii · Banksia prionotes · Banksia scabrella · Banksia sessilis · Banksia sphaerocarpa · Banksia spinulosa · Banksia telmatiaea · Banksia verticillata · Banksia violacea · Barn Swallow · Beagle · Bird · Black Currawong · Black Vulture · Blue-faced Honeyeater · Blue Iguana · Blue whale · Bobcat · Bog turtle · Boletus edulis · Bone Wars · California Condor · Cane toad · Cattle Egret · Cell nucleus · Chiffchaff · Chorioactis · Chromatophore · Chrysiridia rhipheus · Cleveland Bay · Cochineal · Cockatoo · Common Blackbird · Common House Martin · Common Raven · Compsognathus · Edward Drinker Cope · Coprinellus micaceus · Cougar · Cretaceous–Tertiary extinction event · Cryptoprocta spelea · Cyathus · Cyclura nubila · Charles Darwin · Daspletosaurus · Deinonychus · Deinosuchus · Delichon · Diplodocus · Dinosaur · DNA · DNA repair · Domestic sheep · Drosera regia · Ediacara biota · Edmontosaurus · Henry Edwards (entomologist) · Elfin-woods Warbler · Elk · Emperor Penguin · Emu · Eremoryzomys · Eurasian Crag Martin · Eurasian Tree Sparrow · Eurasian Treecreeper · Evolution · Exosome complex · Fauna of Australia · Fauna of Puerto Rico · Fauna of Scotland · Fertilisation of Orchids · Ficus aurea · Fin whale · Flame Robin · Flight feather · Flocke · Georg Forster · Fossa (animal) · Fungus · Galerina marginata · Geastrum quadrifidum · Geastrum triplex · Genetics · Giant Otter · Golden-crowned Sifaka · Golden White-eye · Gorgosaurus · Gray Mouse Lemur · Great Auk · Greater Crested Tern · Green and Golden Bell Frog · Grey Currawong · Guinea pig · Gyromitra esculenta · Hawksbill turtle · Herrerasaurus · Hippopotamus · History of biology · History of evolutionary thought · Homo floresiensis · Huia · Humpback whale · Hydnellum peckii · Icelandic horse · Iguanodon · Immune system · Introduction to viruses · Island Fox · Jaguar · Javan Rhinoceros · Kakapo · Killer whale · King Vulture · Knut (polar bear) · Komodo dragon · Lactarius indigo · Lambeosaurus · Lemur · Lemur evolutionary history · Lion · Loggerhead sea turtle · Lundomys · Lycoperdon echinatum · Macaroni Penguin · Madeira Firecrest · Major urinary proteins · Majungasaurus · Marsh rice rat · Marwari horse · Massospondylus · Barbara McClintock · Mesopropithecus · Metabolism · Mindomys · Miniopterus griveaudi · Mourning Dove · Mycena haematopus · Myxobolus cerebralis · Noronha skink · Noronhomys · Northern Bald Ibis · Northern Pintail · Nuthatch · Ocean sunfish · Oceanic whitetip shark · Olm · On the Origin of Species · Oryzomys · Oryzomys antillarum · Oryzomys couesi · Oryzomys dimidiatus · Oryzomys gorgasi · Pallid sturgeon · Panellus stipticus · Parasaurolophus · Peregrine Falcon · Phagocyte · Pied Currawong · Pinguicula moranensis · Pipistrellus raceyi · Platypus · Plesiorycteropus · Polyozellus · Porbeagle · Primate · Procellariidae · Proteasome · Pseudoryzomys · Psittacosaurus · Puerto Rican Amazon · Pygmy Hippopotamus · Raccoon · Red-backed Fairywren · Red-billed Chough · Red-capped Robin · Red-necked Grebe · Red-tailed Black Cockatoo · Red-winged Fairywren · Rhodotus · Right whale · Ring-tailed Lemur · RNA interference · Rock Martin · Ruff · Ruffed lemur · Rufous-crowned Sparrow · Russet Sparrow · Sarcoscypha coccinea · Saxaul Sparrow · Sea otter · Seabird · Sei whale · Seorsumuscardinus · Short-beaked Echidna · Shrimp farm · Silky shark · Silky Sifaka · Song Thrush · Splendid Fairywren · G. Ledyard Stebbins · Stegosaurus · Styracosaurus · Subfossil lemur · Suffolk Punch · Suillus brevipes · Sumatran Rhinoceros · Superb Fairywren · Tarbosaurus · Tasmanian Devil · Tawny Owl · Telopea speciosissima · Thescelosaurus · Thomasomys ucucha · Thoroughbred · Thylacine · Transandinomys · Transandinomys bolivaris · Transandinomys talamancae · Triaenops menamena · Triceratops · Turkey Vulture · Tyrannosaurus · Variegated Fairywren · Velociraptor · Verbascum thapsus · Virus · Alfred Russel Wallace · White-breasted Nuthatch · White-winged Fairywren · Willie Wagtail · Yellow-tailed Black Cockatoo · Zapata Rail · Zino's Petrel
+Business, economics and finance
+
+Actuary · BAE Systems · William Barley · Richard Cantillon · Carucage · Demand Note · Economy of the Han Dynasty · Economy of India · Economy of the Iroquois · FairTax · Idlewild and Soak Zone · Harold Innis · Madman Muntz · New Orleans Mint · Octopus card · Oliver Typewriter Company · Panic of 1907 · Saint-Gaudens double eagle · Second Malaysia Plan · Shield nickel · Slate industry in Wales · Edgar Speyer · Tulip mania · United Kingdom corporation tax
+Chemistry and mineralogy
+
+Acetic acid · Aldol reaction · Antioxidant · Bupropion · Caesium · Caffeine · Cyclol · Diamond · Enzyme · Enzyme inhibitor · Enzyme kinetics · Francium · Germanium · Helium · Hydrochloric acid · Hydrogen · Iridium · Lead(II) nitrate · Nicotinamide adenine dinucleotide · Niobium · Noble gas · Oxidative phosphorylation · Oxygen · Plutonium · Joseph Priestley · Raney nickel · Sertraline · Synthetic diamond · Technetium · Titanium · Ununoctium · Uranium · Xenon · Yttrium · Zinc
+Computing
+
+4chan · Acid2 · Delrina · Macintosh Classic · Manchester Mark 1 · Manchester Small-Scale Experimental Machine · Microsoft · The Million Dollar Homepage · NeXT · OpenBSD · Opera (web browser) · Parallel computing · PowerBook 100 · Rosetta@home · ROT13 · Scene7 · Search engine optimization · Storm botnet
+Culture and society
+
+Aggie Bonfire · Anna Anderson · Azerbaijani people · Robert Baden-Powell, 1st Baron Baden-Powell · Baden-Powell House · Belarusian Republican Youth Union · William D. Boyce · Guy Bradley · Frederick Russell Burnham · "The Bus Uncle" · The Chaser APEC pranks · Cleveland Street scandal · Cock Lane ghost · D. B. Cooper · Daylight saving time · Charles Domery · Marjory Stoneman Douglas · Montague Druitt · Exploding whale · Fairy tale · Terry Fox · Ursula Franklin · Free Association of German Trade Unions · Margaret Fuller · Girl Scouts of the USA · E. Urner Goodman · Stanley Green · Gropecunt Lane · William Hillcourt · Fanny Imlay · Indigenous people of the Everglades region · Jack the Ripper · Jack the Ripper: The Final Solution · Ketuanan Melayu · Akhtar Hameed Khan · Kylfings · Daniel Lambert · Liberty Bell · Macedonia (terminology) · Bob Marshall (wilderness activist) · Emmeline Pankhurst · Pig-faced women · Polish culture during World War II · Postage stamps of Ireland · Ramblin' Wreck · Rosewood massacre · Same-sex marriage in Spain · The Scout Association of Hong Kong · Scouting · John Martin Scripps · Society of the Song Dynasty · Stonewall riots · Taiwanese aborigines · Tamil people · Mary Toft · Toraja · Truthiness · Wife selling · Wonderbra · Robert Sterling Yard · Whitechapel murders
+Education
+
+Alpha Kappa Alpha · Alpha Phi Alpha · Amador Valley High School · ANAK Society · The Avery Coonley School · Baltimore City College · Dartmouth College · Duke University · Encyclopædia Britannica · Florida Atlantic University · Georgetown University · The Green (Dartmouth College) · The Guardian of Education · Harold and Inge Marcus Department of Industrial and Manufacturing Engineering · History of Baltimore City College · History of Michigan State University · History of Texas A&M University · The Judd School · Lessons for Children · Michigan State University · Ohio Wesleyan University · Oriel College, Oxford · Plano Senior High School · Royal National College for the Blind · School for Creative and Performing Arts · Shimer College · Some Thoughts Concerning Education · Stuyvesant High School · Texas A&M University · Texas Tech University · Thoughts on the Education of Daughters · Tuck School of Business · United States Academic Decathlon · United States Military Academy · University of California, Riverside · University of Michigan · Vkhutemas
+Engineering and technology
+
+Atomic line filter · Autostereogram · Matthew Boulton · Caesar cipher · CFM International CFM56 · Construction of the World Trade Center · Distributed element filter · Draining and development of the Everglades · Electrical engineering · Ernest Emerson · Gas metal arc welding · Gas tungsten arc welding · Halkett boat · Hanford Site · History of timekeeping devices · Hoover Dam · International Space Station · Christopher C. Kraft, Jr. · Glynn Lunney · Oil shale · Panavision · Rampart Dam · Renewable energy in Scotland · Restoration of the Everglades · Rolls-Royce Merlin · Rolls-Royce R · Scout Moor Wind Farm · Joseph Francis Shea · Shielded metal arc welding · Shoe polish · Sholes and Glidden typewriter · Shuttle–Mir Program · Space Shuttle Challenger disaster · Technology of the Song Dynasty · Webley Revolver · Welding · World Science Festival, 2008 · Otto Julius Zobel
+Food and drink
+
+Durian · Ina Garten · History of saffron · Maraba coffee · Medieval cuisine · Odwalla · Saffron · Trade and use of saffron · George Washington (inventor)
+Geography and places
+
+Ahmedabad · Alanya · Aliso Creek (Orange County) · Altrincham · Amchitka · Ann Arbor, Michigan · Antarctica · Ashton-under-Lyne · Australia · Balch Creek · Banff National Park · Bangalore · Bath, Somerset · Belarus · Belgium · Belgrade · Big Butte Creek · Birchington-on-Sea · Black Moshannon State Park · Blyth, Northumberland · Boston · Brownhills · Brownsea Island Scout camp · Bryce Canyon National Park · Bull Run River (Oregon) · Cameroon · Canada · Canberra · Carabane · Caroline Island · Cape Horn · Carrington Moss · The Catlins · Caversham, New Zealand · Chaco Culture National Historical Park · Chad · Chadderton · Chat Moss · Cheadle Hulme · Chennai · Cherry Springs State Park · Chetco River · Chetwynd, British Columbia · Chew Stoke · Chew Valley · Chew Valley Lake · Cleveland · Colton Point State Park · Columbia River · Columbia Slough · Craters of the Moon National Monument and Preserve · Darjeeling · Dawson Creek · Death Valley National Park · Detroit · Dhaka · Dorset · East End of London · El Hatillo Municipality, Miranda · Erie, Pennsylvania · Everglades National Park · Exmoor · Fanno Creek · Forest Park (Portland, Oregon) · Gangtok · Ganoga Lake · Geography and ecology of the Everglades · Geography of Ireland · Germany · Gilwell Park · Glacier National Park (U.S.) · Grand Forks, North Dakota · Greater Manchester · Gyeongju · Hamersley, Western Australia · Hamilton, Ontario · Herne Bay, Kent · Hillsboro, Oregon · Houston · India · Indonesia · Isle of Portland · Japan · Johnson Creek (Willamette River) · Jordan River (Utah) · Karnataka · Kaziranga National Park · Kent, Ohio · Kolkata · Lake Burley Griffin · Larrys Creek · Leonard Harrison State Park · Lethbridge · Little Butte Creek (Rogue River) · Little Thetford · Lock Haven, Pennsylvania · Loihi Seamount · Mackinac Island · Manchester · Mangalore · Manitoba · Mauna Loa · Metacomet Ridge · Minneapolis · Minnesota · Mendip Hills · Monte Ne · Mount St. Helens · Mount Tambora · Mysore · Nathu La · Nauru · Navenby · Neilston · Nevado del Ruiz · Nico Ditch · Noel Park · North Island (Houtman Abrolhos) · Oakwood Cemetery (Troy, New York) · Oklahoma · Oldham · Paulins Kill · Peru · Peterborough · Pithole, Pennsylvania · Plunketts Creek (Loyalsock Creek) · Plunketts Creek Bridge No. 3 · Postman's Park · Prairie Avenue · Presque Isle State Park · Providence, Rhode Island · Quehanna Wild Area · Quneitra · Radcliffe, Greater Manchester · Ratanakiri Province · Redwood National and State Parks · Rhyolite, Nevada · Ricketts Glen State Park · River Parrett · Riverina · Rogue River (Oregon) · Sale, Greater Manchester · San Francisco · Seattle · Shapinsay · Shaw and Crompton · Sheerness · Shoshone National Forest · Somerset · South Side (Chicago) · St. Johns River · St Kilda, Scotland · Stephens City, Virginia · Stretford · Surtsey · Technopark, Kerala · Trafford · Trafford Park · Tryon Creek · Tulsa, Oklahoma · Tumbler Ridge, British Columbia · Turkey · Upper and Lower Table Rock · Upper Pine Bottom State Park · Virginia · Washington, D.C. · Waterfall Gully, South Australia · Waterfalls in Ricketts Glen State Park · Westgate-on-Sea · West Bengal · Weymouth, Dorset · White Deer Hole Creek · Worlds End State Park · Wormshill · Yarralumla, Australian Capital Territory · Yellowstone National Park · Yosemite National Park · Youngstown, Ohio · Zion National Park
+Geology and geophysics
+
+1968 Illinois earthquake · 1980 eruption of Mount St. Helens · 1997 Qayen earthquake · 2002 Bou'in-Zahra earthquake · 2007–2008 Nazko earthquakes · Armero tragedy · Cerro Azul (Chile volcano) · Chicxulub crater · Geology of the Bryce Canyon area · Geology of the Capitol Reef area · Geology of the Death Valley area · Geology of the Grand Canyon area · Geology of the Lassen volcanic area · Geology of the Zion and Kolob canyons area · Mono-Inyo Craters · Mount Cayley volcanic field · David A. Johnston · The Volcano (British Columbia)
+Health and medicine
+
+Acute myeloid leukemia · Alzheimer's disease · Anti-tobacco movement in Nazi Germany · Asperger syndrome · Autism · Frank Macfarlane Burnet · Cerebellum · Chagas disease · Cholangiocarcinoma · Coeliac disease · Down syndrome · Helicobacter pylori · Hepatorenal syndrome · Hippocampus · Hippocrates · Huntington's disease · Icos · Influenza · Keratoconus · Ketogenic diet · Eli Lilly · Linezolid · Lung cancer · Major depressive disorder · Meningitis · Menstrual cycle · Multiple sclerosis · Osteochondritis dissecans · Oxygen toxicity · Poliomyelitis · Pulmonary contusion · Race Against Time (Lewis) · Rotavirus · Schizophrenia · Subarachnoid hemorrhage · Tooth development · Tourette syndrome · Treatment of multiple sclerosis · Tuberculosis · Water fluoridation · Ryan White · Michael Woodruff
+History
+
+1960 South Vietnamese coup attempt · 1962 South Vietnamese Independence Palace bombing · 1964 Brinks Hotel bombing · 1981 Irish hunger strike · 2007 Samjhauta Express bombings · Mumia Abu-Jamal · Abu Nidal · Act of Independence of Lithuania · Samuel Adams · Alcibiades · Ancient Egypt · Harriet Arbuthnot · Arrest and assassination of Ngo Dinh Diem · Elias Ashmole · Aspasia · Alice Ayres · Ramón Emeterio Betances · Birmingham campaign · Blackbeard · Stede Bonnet · Daniel Boone · Carsten Borchgrevink · James Bowie · Joel Brand · British Empire · Isaac Brock · Brown Dog affair · William Speirs Bruce · Henry Cornelius Burnett · Byzantine Empire · William Calcraft · California Gold Rush · Robert Catesby · Chalukya dynasty · Charles Carroll the Settler · Choe Bu · Chola Dynasty · Convention of 1832 · Convention of 1833 · Confederate government of Kentucky · William Cooley · Tom Crean (explorer) · John Dee · Demosthenes · Discovery Expedition · Donner Party · Double Seven Day scuffle · École Polytechnique massacre · Ehime Maru and USS Greeneville collision · England expects that every man will do his duty · Epaminondas · Farthest South · Guy Fawkes · Anne Frank · Fredonian Rebellion · Free State of Galveston · French colonization of Texas · Nicolo Giraud · Gettysburg Address · Great Fire of London · Gunpowder Plot · Hamlet chicken processing plant fire · Han Dynasty · Richard Hawes · Elwood Haynes · Thomas C. Hindman · History of the Australian Capital Territory · History of Burnside · History of the Grand Canyon area · History of Lithuania (1219–1295) · History of Miami · History of Minnesota · History of the Philippines · History of Poland (1945–1989) · History of Puerto Rico · History of Sheffield · History of Solidarity · History of Tamil Nadu · History of the Yosemite area · Hoysala Empire · Hungarian Revolution of 1956 · Imperial Trans-Antarctic Expedition · Inaugural games of the Flavian Amphitheatre · Inner German border · Jersey Shore shark attacks of 1916 · Joan of Arc · John W. Johnston · Ernest Joyce · July 2009 Ürümqi riots · Katyn massacre · Kengir uprising · King Arthur · Kingdom of Makuria · Kingdom of Mysore · Shen Kuo · Laika · Lothal · Edward Low · Aeneas Mackintosh · Charles Edward Magoon · Malcolm X · Manchester Mummy · Manzanar · Clements Markham · Mauthausen-Gusen concentration camp · Harry McNish · Khalid al-Mihdhar · Ming Dynasty · Mormon handcart pioneers · Benjamin Morrell · Muhammad al-Durrah incident · Fridtjof Nansen · Nansen's Fram expedition · Elizabeth Needham · New South Greenland · Night of the Long Knives · Nimrod Expedition · Norte Chico civilization · Emperor Norton · Oklahoma City bombing · Operation Passage to Freedom · Rosa Parks · Parthian Empire · Pericles · Peterloo Massacre · Phan Dinh Phung · Phan Xich Long · Witold Pilecki · Plymouth Colony · Political history of medieval Karnataka · Political history of Mysore and Coorg (1565–1760) · Political integration of India · Radhanite · Rashtrakuta Dynasty · Red Barn Murder · Red River Trails · Retiarius · Rock Springs massacre · Woodes Rogers · Ambrose Rookwood · Ross Sea party · Rus' Khaganate · S. A. Andrée's Arctic Balloon Expedition of 1897 · Saint-Sylvestre coup d'état · Scotland in the High Middle Ages · Robert Falcon Scott · Scottish National Antarctic Expedition · Second Crusade · Ernest Shackleton · Shackleton–Rowett Expedition · Wail al-Shehri · Jack Sheppard · Grace Sherwood · Slavery in ancient Greece · Samantha Smith · Song Dynasty · Southern Cross Expedition · Suleiman the Magnificent · Swedish emigration to the United States · SY Aurora's drift · Sydney Riot of 1879 · Tang Dynasty · Tarrare · Terra Nova Expedition · Theramenes · Thích Quảng Đức · Tiananmen Square self-immolation incident · Tibet during the Ming Dynasty · To the People of Texas & All Americans in the World · Treaty of Devol · Stephen Trigg · Hasekura Tsunenaga · Harriet Tubman · Dick Turpin · Unification of Germany · Urse d'Abetot · Vijayanagara Empire · Giovanni Villani · Voyage of the James Caird · Voyage of the Karluk · Rudolf Vrba · Roy Welensky · Western Chalukya Empire · Western Ganga Dynasty · Xa Loi Pagoda raids · Yagan · Yellowstone fires of 1988 · Zanzibar Revolution · Zhou Tong (archer) · Nikita Zotov
+Language and linguistics
+
+Bengali Language Movement · Chinese classifier · Decipherment of rongorongo · Gwoyeu Romatzyh · Irish phonology · Mayan languages · Nafaanra language · Nahuatl · Rongorongo · Sentence spacing · Swedish language · Tamil language · Turkish language
+Law
+
+Accurate News and Information Act · Alaska Mental Health Enabling Act · Al-Kateb v Godwin · Ashford v Thornton · Assassination of Robert F. Kennedy · Australian Competition and Consumer Commission v Baxter Healthcare · Beauchamp–Sharp Tragedy · Norman Birkett, 1st Baron Birkett · Bricker Amendment · Elizabeth Canning · Constitution of Belarus · Court of Chancery · Death of Ian Tomlinson · Execution by elephant · Dietrich v The Queen · Edward VIII abdication crisis · Federalist No. 10 · Fundamental Rights, Directive Principles and Fundamental Duties of India · Robert Garran · William Garrow · Gray's Inn · Learned Hand · Natalee Holloway · Jena Six · LaRouche criminal trials · Law · Marshalsea · Michael Brown Okinawa assault incident · Moors murders · Ordinances of 1311 · Parliament Acts 1911 and 1949 · Pendle witches · Regulamentul Organic · Report of 1800 · Roe v. Wade · Samlesbury witches · Saxbe fix · Antonin Scalia · Assata Shakur · Tahirih Justice Center · Toa Payoh ritual murders
+Literature and theatre
+
+Abbey Theatre · Ace Books · Chinua Achebe · The Adventures of Tintin · Amazing Stories · Analytical Review · Anarky · Ancient Egyptian literature · Mário de Andrade · Anglo-Saxon Chronicle · Aradia, or the Gospel of the Witches · Augusta, Lady Gregory · Authentic Science Fiction · The Author's Farce · James Robert Baker · Honoré de Balzac · Ann Bannon · Anna Laetitia Barbauld · Natalie Clifford Barney · Batman · Beyond Fantasy Fiction · Bone Sharps, Cowboys, and Thunder Lizards · Book of Kells · Cædmon · Candide · Rachel Carson · Anton Chekhov · Colley Cibber · The Country Wife · The Covent-Garden Journal · Noël Coward · Stephen Crane · Creatures of Impulse · Cousin Bette · David Suzuki: The Autobiography · John Day (printer) · Emily Dickinson · Drapier's Letters · Nancy Drew · Du Fu · Eagle (comic) · Early life of Samuel Johnson · Edmund Evans · Fantastic Universe · Zelda Fitzgerald · The Fox and the Hound (novel) · Fun Home · The General in His Labyrinth · William Gibson · W. S. Gilbert · The Green Child · Rufus Wilmot Griswold · Richard Hakluyt · The Hardy Boys · Halo: Contact Harvest · The Halo Graphic Novel · Hamlet · H.D. · Hemming's Cartulary · Ernest Hemingway · Her Majesty's Theatre · Georgette Heyer · The Historian · History of a Six Weeks' Tour · Oliver Wendell Holmes, Sr. · I Know Why the Caged Bird Sings · If (magazine) · The Illuminatus! Trilogy · Imagination (magazine) · Imagism · Irish Thoroughbred · Joseph Johnson (publisher) · Samuel Johnson · Jonathan Strange & Mr Norrell · James Joyce · Kannada literature in the Vijayanagara Empire · Kannada literature in the Western Chalukya Empire · Lad, A Dog · Lat · Lemurs of Madagascar (book) · Literature in the Hoysala Empire · Lives of the Most Eminent Literary and Scientific Men · James Russell Lowell · Nigel Kneale · La Peau de chagrin · Le Père Goriot · Letters Written in Sweden, Norway, and Denmark · The Log from the Sea of Cortez · Louis Lambert (novel) · The Lucy poems · Bruno Maddox · Make Way for Ducklings · Olivia Manning · Maria: or, The Wrongs of Woman · Mary: A Fiction · Master Juba · George Moore (novelist) · Nature fakers controversy · Night (book) · "Ode on a Grecian Urn" · "Ode on Indolence" · "The Open Boat" · Original Stories from Real Life · Ormulum · Elaine Paige · Pattern Recognition (novel) · The Penelopiad · Philitas of Cos · Edgar Allan Poe · Virginia Eliza Clemm Poe · Poetry · Adelaide Anne Procter · Proserpine (play) · Ion Heliade Rădulescu · Rambles in Germany and Italy · Raptor Red · "The Raven" · Reception history of Jane Austen · The Relapse · Restoration literature · Restoration spectacular · Romeo and Juliet · J. K. Rowling · Roy of the Rovers · El Señor Presidente · School Rumble · William Shakespeare · Mary Shelley · Mary Martha Sherwood · Shojo Beat · "Sinestro Corps War" · Singin' and Swingin' and Gettin' Merry Like Christmas · Sir Gawain and the Green Knight · The Slave Community · Christopher Smart's asylum confinement · "The Thriving Cult of Greed and Power" · Starship Troopers · Tom Swift · Superman · John Millington Synge · Rabindranath Tagore · The Temple at Thatch · Theatre Royal, Drury Lane · The Time Traveler's Wife · "To Autumn" · To Kill a Mockingbird · Tokyo Mew Mew · J. R. R. Tolkien · Trial by Jury · Sarah Trimmer · "Ulysses" (poem) · Uncle Tom's Cabin · Mario Vargas Llosa · A Very Merry Unauthorized Children's Scientology Pageant · Watchmen · The Well of Loneliness · Nathaniel Parker Willis · Mary Wollstonecraft · Wonder Stories · The World Without Us · William Butler Yeats · Z. Marcas
+Mathematics
+
+0.999... · 1 − 2 + 3 − 4 + · · · · Archimedes · Georg Cantor · Cryptography · Euclidean algorithm · Leonhard Euler · Group (mathematics) · Robert Hues · Infinite monkey theorem · Émile Lemoine · Emery Molyneux · Monty Hall problem · Emmy Noether · Blaise Pascal · Polar coordinate system · Problem of Apollonius · Marian Rejewski · Edward Wright (mathematician)
+Media
+
+"200" (Stargate SG-1) · 300 (film) · "Abyssinia, Henry" · Alien vs. Predator (film) · "All Hell Breaks Loose" (Supernatural) · American Beauty (film) · Animaniacs · The Apprentice (UK) · Aquaman (TV program) · B movie · Barton Fink · Battlefield Earth (film) · "The Beginning of the End" (Lost) · Bezhin Meadow · Blade Runner · "The Body" (Buffy the Vampire Slayer) · Borat: Cultural Learnings of America for Make Benefit Glorious Nation of Kazakhstan · The Boys from Baghdad High · Branded to Kill · Bride of Frankenstein · But I'm a Cheerleader · Cannibal Holocaust · "Cape Feare" · Captain Scarlet and the Mysterons · Carnivàle · "Cartman Gets an Anal Probe" · Casablanca (film) · Casino Royale (2006 film) · The Cat and the Canary (1927 film) · Changeling (film) · Characters of Carnivàle · "The City of New York vs. Homer Simpson" · Cold Feet · "Confirmed Dead" · Coonskin (film) · "Damien" (South Park) · Degrassi: The Next Generation · Diary of a Camper · Doctor Who missing episodes · Dog Day Afternoon · "Doomsday" (Doctor Who) · E.T. the Extra-Terrestrial · Fight Club (film) · Film Booking Offices of America · Film noir · Firefly (TV series) · Flywheel, Shyster, and Flywheel · Pauline Fowler · "Fresh Blood" (Supernatural) · Fritz the Cat (film) · "Greatest Hits" (Lost) · Gremlins 2: The New Batch · Halloween (1978 film) · Halloween II · Halloween III: Season of the Witch · "Hell Is Other Robots" · The Hitchhiker's Guide to the Galaxy (radio series) · "Homer's Enemy" · "Homer's Phobia" · Hotel Chevalier · House (TV series) · "Interactions" (The Spectacular Spider-Man) · Jabba the Hutt · Joking Apart · "The Joy of Sect" · Jurassic Park (film) · Martin Keamy · Kinetoscope · Lage Raho Munna Bhai · Last of the Summer Wine · "The Last Temptation of Krust" · Latter Days · "Lisa the Skeptic" · "Lisa the Vegetarian" · Little Miss Sunshine · The Lord of the Rings (1978 film) · Lord of the Universe · Lost: Missing Pieces · Madlax · Making Waves (TV series) · Troy McClure · Meerkat Manor · Meerkat Manor: The Story Begins · "Meet Kevin Johnson" · Megatokyo · Mom and Dad · Montreal Screwjob · "Mother and Child Reunion" (Degrassi: The Next Generation) · "Mr. Hankey, the Christmas Poo" · Mulholland Drive (film) · The Mummy (1999 film) · Mutual Broadcasting System · Night of the Living Dead · Nikki and Paulo · "No Such Thing as Vampires" · noitulovE · "North by North Quahog" · Not One Less · "Once More, with Feeling" (Buffy the Vampire Slayer) · Only Fools and Horses · "The Other Woman" · Our Friends in the North · Our Gang · Palpatine · Paramount Television Network · Parks and Recreation (season 1) · "Partners in Crime" (Doctor Who) · The Philadelphia Inquirer · "Pilot" (House) · "Pilot" (Parks and Recreation) · "Pilot" (Smallville) · "Pilot" (Supernatural) · The Pit and the Pendulum (1961 film) · The Political Cesspool · The Power of Nightmares · "Premiere" (The O.C.) · Press Gang · Pride and Prejudice (1995 TV serial) · "Road to the Multiverse" · Bernard Quatermass · The Quatermass Experiment · Quatermass II · Quatermass and the Pit · Red vs. Blue · The Revolution Will Not Be Televised (film) · Richard III (1955 film) · RKO Pictures · Rob-B-Hood · "A Rugrats Chanukah" · "The Shape of Things to Come" (Lost) · "She Shoulda Said 'No'!" · Sherlock Holmes Baffled · Sideshow Bob · Bart Simpson · Homer Simpson · The Simpsons · The Simpsons Movie · Smallville (season 1) · "Soprano Home Movies" · Sound film · Star Trek: First Contact · Star Trek: The Motion Picture · Star Trek II: The Wrath of Khan · Star Trek III: The Search for Spock · Star Trek VI: The Undiscovered Country · "Starvin' Marvin" (South Park) · "The Stolen Earth" · Street newspaper · "A Streetcar Named Marge" · "Subway" (Homicide: Life on the Street) · Summer of '42 · Sunderland Echo · Sunset Boulevard (film) · Superman film series · Supernatural (season 1) · Supernatural (season 2) · Tender Mercies · Tenebrae (film) · "These Are the Voyages..." · "Through the Looking Glass" (Lost) · Transformers (film) · "Trapped in the Closet" (South Park) · Treehouse of Horror (series) · Trembling Before G-d · Tropic Thunder · "Volcano" (South Park) · "Weight Gain 4000" · "What Is and What Should Never Be" (Supernatural) · The Wire · Witchfinder General (film) · Yes Minister · "You Only Move Twice" · Zodiac (film)
+Media biography
+James Thomas Aubrey, Jr. · Kroger Babb · Eric Bana · Joseph Barbera · Harriet Bosse · Rudolph Cartier · Nancy Cartwright · Jackie Chan · Bette Davis · George Washington Dixon · Steve Dodd · Kirsten Dunst · Judy Garland · Jake Gyllenhaal · Maggie Gyllenhaal · Anthony Michael Hall · William Hanna · Phil Hartman · Ethan Hawke · Katie Holmes · Jason Voorhees · Jenna Jameson · Peter Jennings · Angelina Jolie · Diane Keaton · Abbas Kiarostami · Vivien Leigh · Cillian Murphy · James Nesbitt · Sydney Newman · Austin Nichols · Miranda Otto · Brad Pitt · Satyajit Ray · Sebastian Shaw (actor) · Khan Noonien Singh · Aaron Sorkin · Jack Sparrow · KaDee Strickland · Sharon Tate · Michael Tritter · Jack Warner · Emma Watson · Reese Witherspoon · Anna May Wong · Preity Zinta
+Meteorology
+
+1910 Cuba hurricane · 1928 Okeechobee hurricane · 1933 Atlantic hurricane season · 1941 Atlantic hurricane season · 1941 Florida hurricane · 1983 Atlantic hurricane season · 1988 Atlantic hurricane season · 1994 Atlantic hurricane season · 1995 Pacific hurricane season · 1998 Pacific hurricane season · 1999 Sydney hailstorm · 2000 Sri Lanka cyclone · 2002 Atlantic hurricane season · 2003 Atlantic hurricane season · 2003 Pacific hurricane season · 2005 Atlantic hurricane season · 2005 Azores subtropical storm · 2006 Atlantic hurricane season · 2006 Pacific hurricane season · 2006 Westchester County tornado · 2007 Atlantic hurricane season · Christmas 1994 nor'easter · Climate of India · Climate of Minnesota · Cyclone Gonu · Cyclone Elita · Cyclone Orson · Effects of Hurricane Georges in Louisiana · Effects of Hurricane Isabel in Delaware · Effects of Hurricane Isabel in Maryland and Washington, D.C. · Effects of Hurricane Isabel in North Carolina · Effects of Hurricane Ivan in the Lesser Antilles and South America · Extratropical cyclone · Eye (cyclone) · Global warming · Great Lakes Storm of 1913 · Hurricane Bob (1985) · Hurricane Bret (1999) · Hurricane Carmen · Hurricane Claudette (2003) · Hurricane Daniel (2006) · Hurricane Danny (1997) · Hurricane Dean · Hurricane Dog (1950) · Hurricane Edith (1971) · Hurricane Erika (1997) · Hurricane Erika (2003) · Hurricane Esther (1961) · Hurricane Fabian · Hurricane Gloria · Hurricane Grace (1991) · Hurricane Guillermo (1997) · Hurricane Gustav (2002) · Hurricane Hazel · Hurricane Iniki · Hurricane Ioke · Hurricane Irene (1999) · Hurricane Irene (2005) · Hurricane Isabel · Hurricane Isis (1998) · Hurricane Ismael · Hurricane John (1994) · Hurricane John (2006) · Hurricane Juan · Hurricane Kenna · Hurricane Kiko (1989) · Hurricane Kyle (2002) · Hurricane Lane (2006) · Hurricane Linda (1997) · Hurricane Mitch · Hurricane Nate (2005) · Hurricane Nora (1997) · Hurricane Rick (2009) · Hurricane Vince (2005) · Meteorological history of Hurricane Dean · Meteorological history of Hurricane Gordon (1994) · Meteorological history of Hurricane Ivan · Meteorological history of Hurricane Jeanne · Meteorological history of Hurricane Katrina · Meteorological history of Hurricane Wilma · Retreat of glaciers since 1850 · Subtropical Storm Andrea (2007) · Surface weather analysis · Tornado · Tropical cyclone · Tropical Depression Ten (2005) · Tropical Depression Ten (2007) · Tropical Storm Alberto (2006) · Tropical Storm Allison · Tropical Storm Barry (2001) · Tropical Storm Barry (2007) · Tropical Storm Bill (2003) · Tropical Storm Bonnie (2004) · Tropical Storm Brenda (1960) · Tropical Storm Chantal (2001) · Tropical Storm Edouard (2002) · Tropical Storm Erick (2007) · Tropical Storm Faxai (2007) · Tropical Storm Gabrielle (2007) · Tropical Storm Hanna (2002) · Tropical Storm Henri (2003) · Tropical Storm Hermine (1998) · Tropical Storm Keith (1988) · Tropical Storm Kiko (2007) · Tropical Storm Marco (1990) · Tropical Storm Marco (2008) · Tropical Storm Vamei · Typhoon Paka · Typhoon Pongsona · Typhoon Tip · Wind
+Music
+
+1987 (What the Fuck Is Going On?) · "4 Minutes" (Madonna song) · Achtung Baby · Adore (album) · Agrippina (opera) · "All You Need Is Love" (The JAMs song) · "Amazing Grace" · "Angel of Death" (song) · Anodyne (album) · Arthur (Or the Decline and Fall of the British Empire) · Arular · "Baby Boy" (Beyoncé Knowles song) · Backmasking · "Bale Out" · "Bam Thwok" · The Bartered Bride · The Basement Tapes · Be Here Now (album) · Beijing opera · Blood Sugar Sex Magik · Body Count (album) · By the Way · Californication (album) · Choral symphony · Christ Illusion · "City of Blinding Lights" · Concerto delle donne · Control (Janet Jackson album) · Damageplan · The Dark Side of the Moon · "Déjà Vu" (Beyoncé Knowles song) · Diorama (album) · Disintegration (The Cure album) · "Dixie" (song) · Dookie · Doolittle (album) · Dream Days at the Hotel Existence · Dungeons & Dragons (album) · Elderly Instruments · Enta da Stage · Enter the Wu-Tang (36 Chambers) · "Eyes of the Insane" · Fantasy Black Channel · The Final Cut (album) · Freak Out! · The Freewheelin' Bob Dylan · "Fuck the Millennium" · Ghosts I–IV · God Hates Us All · Grunge · Halo 3 Original Soundtrack · Heavy metal music · "Hey Baby" (No Doubt song) · "Hey Jude" · "Hey Ya!" · H.M.S. Pinafore · "Hollaback Girl" · "I Don't Remember" · Il ritorno d'Ulisse in patria · In Rainbows · In Utero (album) · Internationalist (album) · Intimacy (Bloc Party album) · "Irreplaceable" · Is This It · "Jihad" (song) · "Just Like Heaven" (song) · Kala · Kid A · L'ange de Nisida · L'incoronazione di Poppea · L'Orfeo · "Layla" · "Like a Rolling Stone" · Lions (album) · "The Long and Winding Road" · Love. Angel. Music. Baby. · Loveless (album) · Made in the Dark · Melodifestivalen · A Momentary Lapse of Reason · "Monkey Gone to Heaven" · Mother's Milk · Mozart family grand tour · Music of Athens, Georgia · Music of Maryland · Music of the Lesser Antilles · Music of the United States · "My Belarusy" · "My Happiness" (song) · National Anthem of Russia · Niandra Lades and Usually Just a T-Shirt · Nine Inch Nails live performances · No Depression (album) · No Line on the Horizon · "Nothing to My Name" · Odyssey Number Five · "Old Dan Tucker" · "On the Banks of the Wabash, Far Away" · One Hot Minute · Over the Rainbow (Connie Talbot album) · "Paranoid Android" · Pinkerton (album) · Punk rock · Reign in Blood · Remain in Light · Rhinemaidens · "Rich Girl" (Gwen Stefani song) · Rock Steady (album) · Rufus Does Judy at Carnegie Hall · Rumours · Salsa music · "Say Say Say" · The Seduction of Ingmar Bergman · Silent Alarm · Sky Blue Sky · Slay Tracks (1933–1969) · "Smells Like Teen Spirit" · "Something" · Sonatas and Interludes · South of Heaven · "Speechless" (Michael Jackson song) · Spiderland · Still Reigning · Supernature (Goldfrapp album) · Surfer Rosa · Sylvia (ballet) · Symphonic poems (Liszt) · Symphony No. 3 (Górecki) · Symphony No. 8 (Mahler) · Thespis (opera) · "This Charming Man" · Thriller (album) · "Today" (The Smashing Pumpkins song) · Tosca · "Touch Me I'm Sick" · Tragic Kingdom · "Under the Bridge" · Vol. 3: (The Subliminal Verses) · "We Are the World" · A Weekend in the City · "What You Waiting For?" · "What'd I Say" · Wish You Were Here (Pink Floyd album) · "The World Is Not Enough" (song) · Year Zero (album)
+Music biography
+Aaliyah · AC/DC · Alice in Chains · Audioslave · Walter Bache · The Beatles · Bix Beiderbecke · Big Star · Black Francis · Adrian Boult · David Bowie · Kate Bush · Mariah Carey · Jay Chou · Rebecca Helferich Clarke · Damageplan · Josquin des Prez · Celine Dion · Nick Drake · Bob Dylan · Bernard Fanning · Fightin' Texas Aggie Band · Flea (musician) · John Frusciante · Godsmack · The Greencards · Ayumi Hamasaki · Insane Clown Posse · Janet Jackson · Michael Jackson · Bradley Joseph · Joy Division · Maynard James Keenan · The Kinks · Frank Klepacki · Héctor Lavoe · John Lennon · David Lovering · Witold Lutosławski · Madonna (entertainer) · Gustav Mahler · John Mayer · Olivier Messiaen · Metallica · Meshuggah · Kylie Minogue · Motörhead · Mozart in Italy · Ram Narayan · Nine Inch Nails · Nirvana (band) · The Notorious B.I.G. · Opeth · The Orb · Leo Ornstein · Ellis Paul · Pearl Jam · Pixies · Powderfinger · Elvis Presley · Radiohead · R.E.M. · Nikolai Rimsky-Korsakov · Rush (band) · Joey Santiago · Sasha (DJ) · Selena · Sex Pistols · S.H.E · Dmitri Shostakovich · Silverchair · Slayer · The Smashing Pumpkins · Bedřich Smetana · Elliott Smith · Gwen Stefani · Stereolab · Strapping Young Lad · The Supremes · Joseph Szigeti · Tōru Takemitsu · Connie Talbot · Pyotr Ilyich Tchaikovsky · Tchaikovsky and the Belyayev circle · Tchaikovsky and The Five · Tool (band) · U2 · Uncle Tupelo · The Wiggles · Wilco · Frank Zappa
+Philosophy and psychology
+
+Attachment theory · Conatus · Confirmation bias · Free will · Getting It: The Psychology of est · Eric A. Havelock · Philosophy of mind · Hilary Putnam · Reactive attachment disorder · Transhumanism · A Vindication of the Rights of Woman · Bernard Williams
+Physics and astronomy
+
+243 Ida · 90377 Sedna · Apollo 8 · Asteroid belt · Astrophysics Data System · Atmosphere of Jupiter · Atom · Barnard's Star · Big Bang · Binary star · Callisto (moon) · Cat's Eye Nebula · Ceres (dwarf planet) · Comet Hale-Bopp · Comet Hyakutake · Comet Shoemaker-Levy 9 · Crab Nebula · Cygnus X-1 · Definition of planet · Dwarf planet · Earth · Electron · Enceladus (moon) · Equipartition theorem · Eris (dwarf planet) · Europa (moon) · Extrasolar planet · Formation and evolution of the Solar System · Galaxy · Gamma-ray burst · Ganymede (moon) · Ben Gascoigne · General relativity · Globular cluster · GRB 970228 · GRB 970508 · H II region · Halley's Comet · Haumea (dwarf planet) · Herbig–Haro object · Hubble Deep Field · Hubble Space Telescope · IK Pegasi · Introduction to general relativity · Io (moon) · Jupiter · Jupiter Trojan · Johannes Kepler · George Koval · Kreutz Sungrazers · Kuiper belt · Laplace–Runge–Lenz vector · Magnetosphere of Jupiter · Main sequence · Makemake (dwarf planet) · Mars · Mercury (planet) · Moon · Neptune · Nebular hypothesis · Oberon (moon) · Gerard K. O'Neill · Oort cloud · Photon · Planet · Planetary habitability · Planetary nebula · Planets beyond Neptune · Pluto · Proxima Centauri · Quark · Redshift · Rings of Jupiter · Rings of Neptune · Rings of Uranus · Saturn · Scattered disc · Sirius · Louis Slotin · Solar eclipse · Solar System · Star · Sun · Supernova · Tau Ceti · Edward Teller · Titan (moon) · Titania (moon) · Toronto Magnetic and Meteorological Observatory · Transit of Venus · Triton (moon) · Umbriel (moon) · Uranus · Vega · Venus · Volcanism on Io · White dwarf · Zhang Heng
+Politics and government
+
+1880 Republican National Convention · 1937 Social Credit backbenchers' revolt · 1975 Australian constitutional crisis · 1996 United States campaign finance controversy · Anarcho-capitalism · Yasser Arafat · Ban Ki-moon · Alexandre Banza · J. C. W. Beckham · Barthélemy Boganda · William O'Connell Bradley · Bring Us Together · John Brownlee as Attorney-General of Alberta · John Brownlee sex scandal · Simon Bolivar Buckner · California's 12th congressional district election, 1946 · Canadian federal election, 1957 · Honório Carneiro Leão, Marquis of Paraná · Neville Chamberlain · Checkers speech · Murray Chotiner · Wesley Clark · Grover Cleveland · Calvin Coolidge · Richard Cordray · John Diefenbaker · Don Dunstan · Early life and military career of John McCain · European Commission · European Parliament · Gerald Ford · Wendell H. Ford · Fourth International · William Goebel · Emma Goldman · Government of the Han Dynasty · Herbert Greenfield · Benjamin Harrison · William Henry Harrison · John L. Helm · Inauguration of Barack Obama · George F. Kennan · Kentucky gubernatorial election, 1899 · Nikita Khrushchev · Franklin Knight Lane · League of Nations · Leopold Report · David Lewis (politician) · Liberal Movement · Local Government Commission for England (1992) · Angus Lewis Macdonald · Thomas R. Marshall · John McCain · Bob McEwen · Military career of Hugo Chávez · Harvey Milk · Edwin P. Morrow · Ngô Đình Cẩn · Ngo Dinh Diem presidential visit to Australia · Nguyen Ngoc Tho · Pat Nixon · Nutrition Assistance for Puerto Rico · Barack Obama · Ostend Manifesto · Overman Committee · Paul E. Patton · Ross Perot presidential campaign, 1992 · Józef Piłsudski · Thomas Playford IV · Premiership of John Brownlee · Privy Council of the United Kingdom · Read my lips: no new taxes · Nancy Reagan · Ronald Reagan · Richard Gavin Reid · Louis Riel · Rise of Neville Chamberlain · Lawrence Sullivan Ross · Royal Assent · Alexander Cameron Rutherford · Terry Sanford · Scottish Parliament · Solomon P. Sharp · Isaac Shelby · Arthur Sifton · South Australian state election, 2006 · Albert Speer · Augustus Owsley Stanley · State of Vietnam referendum, 1955 · Ed Stelmach · Charles Stewart (Canadian politician) · United Nations Parliamentary Assembly · United States Senate election in California, 1950 · P. K. van der Byl · Viet Nam Quoc Dan Dang · A Vindication of the Rights of Men · Jerry Voorhis · Daniel Webster · Gough Whitlam · William Wilberforce
+Religion, mysticism and mythology
+
+Ælfheah of Canterbury · Adi Shankara · The Age of Reason · Anekantavada · Asser · Atheism · Augustine of Canterbury · Badnjak (Serbian) · Bahá'í Faith · Beth Hamedrash Hagadol (Manhattan, New York) · Martin Bucer · John Calvin · Cardinal-nephew · Clement of Dunblane · Congregation Baith Israel Anshei Emes · Congregation Beth Elohim (Brooklyn, New York) · Walter de Coventre · Thomas Cranmer · Diocletianic Persecution · Ealdred (archbishop of York) · Early life of Joseph Smith, Jr. · First Roumanian-American congregation · Gilbert Foliot · Ganesha · George Fox · Greek mythology · Gregorian chant · Gregorian mission · Gregory of Nazianzus · Henry (Bishop of Finland) · Hilary of Chichester · Intelligent design · Iravan · Jocelin (Bishop of Glasgow) · Robert of Jumièges · Peter Jones (missionary) · Justus · Kitsune · Knights Templar · John Knox · Cosmo Gordon Lang · Laurence of Canterbury · William Longchamp · Maximus the Confessor · Mellitus · Millennium '73 · Mosque · Netley Abbey · Nigel (Bishop of Ely) · Nostradamus · Operation Auca · Orion (mythology) · Paulinus of York · Pope Pius XII · Priestley Riots · Religious debates over the Harry Potter series · Rhodes blood libel · Roman Catholic Archdiocese of Miami · William de St-Calais · St. Michael's Cathedral, Qingdao · Stigand · Catholic doctrine regarding the Ten Commandments · Thomas of Bayeux · Joseph W. Tkach · Temple Sinai (Oakland, California) · Vampire · Vithoba · Hubert Walter · Wilfrid · William de Corbeil · William of Tyre · Xenu · Huldrych Zwingli
+Royalty, nobility and heraldry
+
+Áedán mac Gabráin · Ælle of Sussex · Æthelbald of Mercia · Æthelberht of Kent · Æthelred of Mercia · Albert, Prince Consort · Alboin · Aldfrith of Northumbria · Alexandra of Denmark · Prince Albert Victor, Duke of Clarence and Avondale · Grand Duchess Anastasia Nikolaevna of Russia · Ahmose I · Anne of Denmark · Charles Atangana · Attalus I · Augustus · Basiliscus · Princess Beatrice of the United Kingdom · Beorhtwulf of Mercia · John Brooke-Little · Cædwalla of Wessex · Ceawlin of Wessex · George Calvert, 1st Baron Baltimore · Charles II of England · Princess Charlotte of Wales · John Churchill, 1st Duke of Marlborough · Sarah Churchill, Duchess of Marlborough · Coenred of Mercia · Coenwulf of Mercia · Constantine II of Scotland · Coronation of the British monarch · David I of Scotland · Diocletian · Domitian · Donnchadh, Earl of Carrick · Eadbald of Kent · Eardwulf of Northumbria · Ecclesiastical heraldry · Edward III of England · Edward VI of England · Edward VII of the United Kingdom · Edward VIII of the United Kingdom · Egbert of Wessex · Elagabalus · Elizabeth I of England · Ernest Augustus I of Hanover · Frederick III, German Emperor · George I of Great Britain · George I of Greece · George III of the United Kingdom · George IV of the United Kingdom · George V of the United Kingdom · George VI of the United Kingdom · Princess Helena of the United Kingdom · Family of Gediminas · Ine of Wessex · Ivan Alexander of Bulgaria · James I of England · James II of England · Jogaila · Prince Sadruddin Aga Khan · Princess Louise, Duchess of Argyll · Elizabeth Bowes-Lyon · Manuel I Komnenos · Mary of Teck · Mary II of England · Maximian · Catherine de' Medici · Monarchy of the United Kingdom · Óengus I of the Picts · Offa of Mercia · Grand Duchess Olga Nikolaevna of Russia · Penda of Mercia · Hannah Primrose, Countess of Rosebery · Princess Alice of Battenberg · Princess Victoria of Hesse and by Rhine · Privilege of peerage · Rhys ap Gruffydd · Representative peer · Richard II of England · Sargon of Akkad · Domenico Selvo · Simeon I of Bulgaria · Siward, Earl of Northumbria · Charlotte Stuart, Duchess of Albany · Sviatoslav I of Kiev · Tiridates I of Armenia · Wallis, Duchess of Windsor · Wiglaf of Mercia · Wihtred of Kent · William III of England · William IV of the United Kingdom · Wulfhere of Mercia
+Sport and recreation
+
+1896 Summer Olympics · 1910 London to Manchester air race · 1923 FA Cup Final · 1926 World Series · 1930 FIFA World Cup · 1956 FA Cup Final · 1956 Winter Olympics · 1994 San Marino Grand Prix · 1995 Japanese Grand Prix · 1995 Pacific Grand Prix · 2000 Sugar Bowl · 2003 Insight Bowl · 2004 World Series · 2005 ACC Championship Game · 2005 Sugar Bowl · 2005 Texas Longhorns football team · 2005 United States Grand Prix · 2006 Chick-fil-A Bowl · 2006 Gator Bowl · 2007 ACC Championship Game · 2007 USC Trojans football team · 2008 ACC Championship Game · 2008 Brazilian Grand Prix · 2008 Humanitarian Bowl · 2008 Japanese Grand Prix · 2008 Monaco Grand Prix · 2008 Orange Bowl · 2009 Giro d'Italia · 2009 International Bowl · 2009 Lamar Hunt U.S. Open Cup Final · 2009 Orange Bowl · Aikido · Arsenal F.C. · Association football · Aston Villa F.C. · Australia at the Winter Olympics · Barbara L · Sid Barnes with the Australian cricket team in England in 1948 · Baseball · Belle Vue Zoological Gardens · Bids for the 2012 Summer Olympics · Blackburn Olympic F.C. · Bodyline · Brabham · Brabham BT19 · Calgary Flames · Calgary Hitmen · Chariot racing · Central Coast Mariners FC · Chelsea F.C. · Chess · Chicado V · City of Manchester Stadium · Cotswold Olimpick Games · Cricket World Cup · Crusaders (rugby) · Cycling at the 2008 Summer Olympics – Men's road race · Cycling at the 2008 Summer Olympics – Women's road race · December to Dismember (2006) · Derry City F.C. · Dover Athletic F.C. · Dr Pepper Ballpark · Dungeons & Dragons · Easy Jet · England national football team manager · England national rugby union team · Expedition to the Barrier Peaks · FC Barcelona · FIFA World Cup · Fifth Test, 1948 Ashes series · Fighting in ice hockey · First-move advantage in chess · First Test, 1948 Ashes series · Fourth Test, 1948 Ashes series · France national rugby union team · Germany women's national football team · Gillingham F.C. · Gliding · Go Man Go · The Great American Bash (2005) · Hare coursing · Herschel Greer Stadium · History of American football · History of Arsenal F.C. (1886–1966) · History of Aston Villa F.C. (1961–present) · History of Bradford City A.F.C. · History of Gillingham F.C. · History of Ipswich Town F.C. · History of the Montreal Canadiens · History of the National Hockey League (1917–1942) · History of the National Hockey League (1942–1967) · History of the National Hockey League (1967–1992) · History of Norwich City F.C. · History of Stoke City F.C. · History of the board game Monopoly · Hockey Hall of Fame · Ice hockey at the Olympic Games · IFK Göteborg · Ipswich Town F.C. · Jesus College Boat Club (Oxford) · John the bookmaker controversy · Kit (association football) · Leek Town F.C. · Lightning Bar · Lockdown (2008) · Luton Town F.C. · Manchester City F.C. · Manchester United F.C. · Margate F.C. · McDonald's Cycle Center · Miss Meyers · Nashville Sounds · New Jersey Devils · New Zealand national rugby union team · No Way Out (2004) · North Road (football ground) · Norwich City F.C. · Nottingham Panthers · Old Trafford · Olympic Games · Over the Edge (1999) · PNC Park · Portman Road · Posting system · Premier League · Priestfield Stadium · Quietly Confident Quartet · Qwest Field · Ravenloft (module) · Rugby World Cup · Scotland national football team · Seattle Sounders FC · Second Test, 1948 Ashes series · Sheffield Wednesday F.C. · Stanley Cup · Stocksbridge Park Steels F.C. · SummerSlam (2003) · Sunday Times Golden Globe Race · Sunderland A.F.C. · Sydney Roosters · T206 Honus Wagner · Third Test, 1948 Ashes series · Toronto Raptors · Valley Parade · Wales national rugby union team · West Indian cricket team in England in 1988 · York City F.C. · York Park · Yorkshire captaincy affair of 1927 · Youngstown Ohio Works · Yukon Quest
+Sport and recreation biography
+Nick Adenhart · Sid Barnes · Shelton Benjamin · Moe Berg · Brian Booth · Luc Bourdon · Donald Bradman · Donald Bradman with the Australian cricket team in England in 1948 · Eric Brewer (ice hockey) · Martin Brodeur · Neil Brooks · Bill Brown (cricketer) · Steve Bruce · Simon Byrne · Rudolf Caracciola · Ian Chappell · CM Punk · Paul Collingwood · A. E. J. Collins · Ian Craig · Tim Duncan · Early life of Keith Miller · Bobby Eaton · Duncan Edwards · Ray Emery · Peter Evans (swimmer) · Nikita Filatov · Theoren Fleury · Adam Gilchrist · Michael Gomez · George H. D. Gossip · Wayne Gretzky · Orval Grove · Ron Hamence with the Australian cricket team in England in 1948 · Wally Hammond · Neil Harvey with the Australian cricket team in England in 1948 · Dominik Hašek · Lindsay Hassett with the Australian cricket team in England in 1948 · Thierry Henry · Clem Hill · Damon Hill · Art Houtteman · Karmichael Hunt · Roy Kilner · Jarome Iginla · Archie Jackson · Douglas Jardine · Ian Johnson (cricketer) · Keith Johnson (cricket administrator) · Magic Johnson · Michael Jordan · Masako Katsura · Susianna Kentikian · Mark Kerry · Bart King · Sandy Koufax · Cynna Kydd · Faith Leech · Trevor Linden · Ray Lindwall with the Australian cricket team in England in 1948 · Sam Loxton · Sam Loxton with the Australian cricket team in England in 1948 · Roberto Luongo · Charlie Macartney · Jack Marsh · Jimmy McAleer · William McGregor · Ian Meckiff · Bob Meusel · Keith Miller in the 1946–47 Australian cricket season · Keith Miller with the Australian cricket team in England in 1948 · Howie Morenz · Sandra Morgan · Arthur Morris · Stan Musial · Ian O'Brien · Kevin O'Halloran · Bill O'Reilly (cricketer) · Ben Paschal · Kevin Pietersen · Jacques Plante · Bill Ponsford · Alain Prost · Tom Pryce · Stamata Revithi · Wilfred Rhodes · J. R. Richard · Doug Ring with the Australian cricket team in England in 1948 · Mariano Rivera · Jackie Robinson · Bobby Robson · Bill Russell · Joe Sakic · Daniel Sedin · Henrik Sedin · Joel Selwood · Waisale Serevi · Gilberto Silva · Harbhajan Singh · Lee Smith (baseball) · Ozzie Smith · Paul Stastny · Hod Stuart · Don Tallon · Tiny Thompson · Ian Thorpe · Jim Thorpe · Mark Tonelli · Ernie Toshack · Ernie Toshack with the Australian cricket team in England in 1948 · Bert Trautmann · Marcus Trescothick · Harry Trott · Hugh Trumble · The Turk · Georges Vézina · John Wark · Tyrone Wheatley · Bob Windle · Yao Ming
+Transport
+
+Albert Bridge, London · American Airlines Flight 11 · American Airlines Flight 77 · Baker Street and Waterloo Railway · Baltimore Steam Packet Company · Battersea Bridge · Sophie Blanchard · Boeing 747 · Boeing 777 · BP Pedestrian Bridge · Lester Brain · Brill railway station · Brill Tramway · California State Route 78 · Capitol Loop · Central London Railway · Charing Cross, Euston and Hampstead Railway · Chelsea Bridge · Chickasaw Turnpike · Cincinnati, Lebanon and Northern Railway · City and South London Railway · Cogan House Covered Bridge · Don Valley Parkway · Eastern Suburbs & Illawarra railway line, Sydney · Federal Bridge Gross Weight Formula · Forksville Covered Bridge · General aviation in the United Kingdom · Gol Transportes Aéreos Flight 1907 · Great Northern, Piccadilly and Brompton Railway · Hellingly Hospital Railway · Hillsgrove Covered Bridge · Holden · Holden VE Commodore · Hours of service · Interstate 15 in Arizona · Interstate 355 · Interstate 68 · Interstate 70 in Colorado · Interstate 70 in Utah · John Bull (locomotive) · Kansas Turnpike · Kinzua Bridge · London congestion charge · LSWR N15 class · M-28 Business (Ishpeming–Negaunee, Michigan) · M-28 (Michigan highway) · M-35 (Michigan highway) · M62 motorway · Manchester Bolton & Bury Canal · Manila Light Rail Transit System · Manila Metro Rail Transit System · Maryland Route 36 · Maserati MC12 · Mass Rapid Transit (Singapore) · MTR · New Carissa · New York State Route 22 · New York State Route 28 · New York State Route 28N · New York State Route 32 · New York State Route 174 · New York State Route 175 · New York State Route 308 · New York State Route 311 · New York State Route 343 · New York State Route 373 · Niagara Falls Suspension Bridge · O-Bahn Busway · Pioneer Zephyr · Pulaski Skyway · Quainton Road railway station · Richmond Bridge, London · Ridge Route · Rogers Locomotive and Machine Works · Royal Blue (B&O train) · SECR K and SR K1 classes · SECR N class · SR Leader class · SR Merchant Navy class · SR West Country and Battle of Britain classes · SS Christopher Columbus · SS Dakotan · SS Kroonland · SS Mauna Loa · SS Minnesotan · SS Montanan · SS Ohioan (1914) · SS Pennsylvanian · SS Washingtonian · State Route 74 (New York – Vermont) · Sonestown Covered Bridge · Sweet Track · Talbot Tagora · Talyllyn Railway · Tunnel Railway · Underground Electric Railways Company of London · United Airlines Flight 93 · U.S. Route 40 Alternate (Keysers Ridge – Cumberland, Maryland) · U.S. Route 41 in Michigan · U.S. Route 491 · U.S. Route 50 in Nevada · Utah State Route 128 · Vauxhall Bridge · Waddesdon Road railway station · Wandsworth Bridge · Westcott railway station · Winter service vehicle · Wood Siding railway station · Wotton railway station
+Video gaming
+
+1080° Snowboarding · 4X · Agatha Christie: And Then There Were None · Agatha Christie: Murder on the Orient Express · Age of Empires · Age of Empires II: The Age of Kings · Age of Mythology · Alleyway · Aquaria (video game) · Arbiter (Halo) · The Beatles: Rock Band · BioShock · Call of Duty 4: Modern Warfare · Castlevania: Aria of Sorrow · Castlevania: Dawn of Sorrow · Characters of Final Fantasy VIII · Chrono Cross · Chrono Trigger · Conan (2007 video game) · Cortana · Crackdown · Crazy Taxi (series) · Crush (video game) · Development of The Elder Scrolls IV: Oblivion · Devil May Cry (video game) · Devil May Cry 2 · Devil May Cry 3: Dante's Awakening · Defense of the Ancients · Donkey Kong (video game) · The Elder Scrolls III: Morrowind · Empires: Dawn of the Modern World · ESRB re-rating of The Elder Scrolls IV: Oblivion · F-Zero GX · Final Fantasy · Final Fantasy Tactics · Final Fantasy VI · Final Fantasy VIII · Final Fantasy IX · Final Fantasy X · Final Fantasy X-2 · Final Fantasy XI · Final Fantasy XII · Flood (Halo) · Flower (video game) · GameFAQs · Giants: Citizen Kabuto · Golden Sun · Grim Fandango · Guitar Hero (video game) · Half-Life 2: Episode One · Half-Life 2: Lost Coast · Halo: Combat Evolved · Halo 2 · Halo 3 · Halo 3: ODST · Halo Wars · Ico · Iridion 3D · Katamari Damacy · Kingdom Hearts · Kingdom Hearts (video game) · Kingdom Hearts: Chain of Memories · Kingdom Hearts II · Legacy of Kain: Soul Reaver · The Legend of Zelda: Majora's Mask · The Legend of Zelda: Ocarina of Time · The Legend of Zelda: Oracle of Seasons and Oracle of Ages · The Legend of Zelda: The Wind Waker · Lego Star Wars II: The Original Trilogy · The Lord of the Rings: The Battle for Middle-earth II · Mana (series) · Marble Madness · Mario & Sonic at the Olympic Games · Mario Power Tennis · Master Chief (Halo) · Metal Gear Solid 3: Snake Eater · Metroid Prime · Metroid Prime 2: Echoes · Metroid Prime 3: Corruption · Midtown Madness · MissingNo. · Myst · Myst III: Exile · Myst IV: Revelation · Myst V: End of Ages · Mystical Ninja Starring Goemon · New Super Mario Bros. · Ninja Gaiden (Nintendo Entertainment System) · Ōkami · Pathways into Darkness · Perfect Dark · Planescape: Torment · Populous: The Beginning · Portal (video game) · Radical Dreamers: Nusumenai Hōseki · Rise and Fall: Civilizations at War · Riven · Sacrifice (video game) · Sam & Max: Freelance Police · Shadow of the Colossus · Shadow the Hedgehog (video game) · Silent Hill 4: The Room · The Simpsons Game · The Simpsons Hit & Run · Space Invaders · Spyro: Year of the Dragon · StarCraft · StarCraft: Ghost · Star Wars: Episode I: Battle for Naboo · Star Wars: Rogue Squadron · Super Columbine Massacre RPG! · Super Mario 64 · Super Nintendo Entertainment System · Super Smash Bros. Brawl · Super Smash Bros. Melee · System Shock · ToeJam & Earl · Turok: Dinosaur Hunter · Ultima Underworld: The Stygian Abyss · Uru: Ages Beyond Myst · Vagrant Story · Voyage: Inspired by Jules Verne · Wii · Wii Sports · Wipeout 3 · The World Ends with You
+Warfare
+
+13th Airborne Division (United States) · 2nd Canadian Infantry Division · 21st Regiment Massachusetts Volunteer Infantry · 22nd Regiment Massachusetts Volunteer Infantry · 3rd Battalion 3rd Marines · Australian Defence Force · Byzantine navy · Hispanic Americans in World War II · Maryland and Virginia Rifle Regiment · Midshipman · Military history of Puerto Rico · Military of the Democratic Republic of the Congo · No. 1 Wing RAAF · Structural history of the Roman military · Swedish allotment system · Timor Leste Defence Force · United States Marine Corps
+Warfare matériel
+AHS Centaur · Akutan Zero · Alaska class cruiser · Amagi class battlecruiser · AMX-30 · AMX-30E · Arena Active Protection System · Armament of the Iowa class battleship · Battleship · Bayern class battleship · Brazilian battleship Minas Geraes · Brazilian cruiser Bahia · Cannon · Courageous class battlecruiser · Derfflinger class battlecruiser · Design 1047 battlecruiser · Dreadnought · Dutch 1913 battleship proposal · Helgoland class battleship · HMAS Australia (1911) · HMS Ark Royal (91) · HMS Calliope (1884) · HMS Cardiff (D108) · HMS Endeavour · HMS Lion (1910) · HMAS Melbourne (R21) · HMS Royal Oak (08) · Horses in World War I · Indiana class battleship · Ironclad warship · Japanese aircraft carrier Kaga · Japanese battleship Haruna · Japanese battleship Tosa · Japanese battleship Yamato · Kaiser class battleship · König class battleship · Leopard 2E · Light Tank Mk VII Tetrarch · Lince (tank) · M249 light machine gun · McDonnell Douglas F-4 Phantom II · Moltke class battlecruiser · Montana class battleship · Nassau class battleship · North Carolina class battleship · Panzer I · Pre-dreadnought battleship · Rheinmetall 120 mm gun · Rivadavia class battleship · Russian battleship Slava · SM U-66 · SMS Baden (1915) · SMS Blücher · SMS Derfflinger · SMS Goeben · SMS Helgoland · SMS Hindenburg · SMS König · SMS Lützow · SMS Moltke · SMS Seydlitz · SMS Von der Tann · SMS Westfalen · Sovetsky Soyuz class battleship · T-26 tank · T-34 · TAM (tank) · Tanks in the Spanish Army · USS Connecticut (BB-18) · USS Congress (1799) · USS Constitution · USS Illinois (BB-65) · USS Indiana (BB-1) · USS Iowa (BB-61) · USS Iowa turret explosion · USS Kentucky (BB-66) · USS Massachusetts (BB-2) · USS Missouri (BB-63) · USS New Jersey (BB-62) · USS Nevada (BB-36) · USS President · USS Princess Matoika (ID-2290) · USS Orizaba (ID-1536) · USS Siboney (ID-2999) · USS West Bridge (ID-2888) · USS Wisconsin (BB-64) · Verdeja · Yamato class battleship
+Wars, battles and events
+1968 Thule Air Base B-52 crash · 1982 British Army Gazelle friendly fire incident · 1984 Rajneeshee bioterror attack · 1994 Black Hawk shootdown incident · 1994 Fairchild Air Force Base B-52 crash · 2007 United States Air Force nuclear weapons incident · Action of 1 August 1801 · Action of 13 January 1797 · Actions along the Matanikau · Admiralty Islands campaign · Anglo-Zanzibar War · Attack on Sydney Harbour · Axis naval activity in Australian waters · Battle for Henderson Field · Battle of Albuera · Battle of Arras (1917) · Battle of Austerlitz · Battle of Badr · Battle of Bardia · Battle of Barnet · Battle of Barrosa · Battle of Bicocca · Battle of Blenheim · Battle of Bosworth Field · Battle of Cannae · Battle of Cape Esperance · Battle of Ceresole · Battle of Concepción · Battle of Corydon · Battle of Dürenstein · Battle of Dyrrhachium (1081) · Battle of Dien Bien Phu · Battle of Edson's Ridge · Battle of Goliad · Battle of Gonzales · Battle of Grand Port · Battle of Greece · Battle of Khafji · Battle of Lipantitlán · Battle of Lissa (1811) · Battle of Midway · Battle of Morotai · Battle of Moscow · Battle of Musa Qala · Battle of Mount Austen, the Galloping Horse, and the Sea Horse · Battle of Osan · Battle of Pulo Aura · Battle of Quebec (1775) · Battle of Ramillies · Battle of Red Cliffs · Battle of Rennell Island · Battle of Savo Island · Battle of Schellenberg · Battle of Shiloh · Battle of Svolder · Battle of Taejon · Battle of Tassafaronga · Battle of the Alamo · Battle of The Cedars · Battle of the Coral Sea · Battle of the Eastern Solomons · Battle of the Gebora · Battle of the Nile · Battle of the Santa Cruz Islands · Battle of the Tenaru · Battle of Ticonderoga (1759) · Battle of Tippecanoe · Battle of Tory Island · Battle of Tulagi and Gavutu–Tanambogo · Battle of Valcour Island · Battle of Verrières Ridge · Battle of Villers-Bocage · Battle of Vimy Ridge · Battle of Winterthur (1799) · Bombing of Yawata (June 1944) · Boshin War · British anti-invasion preparations of World War II · Campaign history of the Roman military · Capture of Fort Ticonderoga · Carlson's patrol · Caspian expeditions of the Rus · Cleomenean War · Cologne War · Convoy GP55 · Corinthian War · Crawford expedition · Cretan War · Falaise pocket · Finnish Civil War · German occupation of Luxembourg in World War I · Glorious First of June · Grass Fight · Guadalcanal Campaign · Huế chemical attacks · Invasion of Tulagi (May 1942) · Italian War of 1521–1526 · Italian War of 1542–1546 · Koli Point action · Krulak Mendenhall mission · Landing at Nadzab · Lochry's Defeat · Matanikau Offensive · Military history of Australia during World War II · Morotai Mutiny · Mozambican War of Independence · Nagorno-Karabakh War · Naval Battle of Guadalcanal · Omaha Beach · Operation Brevity · Operation Camargue · Operation Charnwood · Operation Cobra · Operation Downfall · Operation Epsom · Operation Ke · Operation Perch · Operation Teardrop · Operation Ten-Go · Operation Tractable · Operation Uranus · Operation Varsity · Operation Wrath of God · Polish–Soviet War · Pontiac's War · Port Chicago disaster · Raid at Cabanatuan · Raising the Flag on Iwo Jima · Roman–Persian Wars · Second Ostend Raid · Siege of Godesberg · Siege of Malakand · Surrender of Japan · Take Ichi convoy · Third Battle of Kharkov · Third Servile War · Toledo War · Ulm Campaign · War against Nabis · War of the Bavarian Succession · War of the Fifth Coalition · War of the League of Cambrai · Western Front (World War I) · Yom Kippur War
+Warfare biography
+Ba Cut · Hovhannes Bagramyan · Thomas Baker (aviator) · Heinrich Bär · Prince Louis of Battenberg · Otto Becher · William Bostock · Juan Davis Bradburn · Raymond Brownell · Harry Chauvel · Harry Cobby · Adrian Cole (RAAF officer) · Thomas Crisp · Andrew Cunningham, 1st Viscount Cunningham of Hyndhope · Roderic Dallas · Tom Derrick · Hermann Detzner · Brian Eaton · Charles Eaton (RAAF officer) · Neil Hamilton Fairley · Karl Aloys zu Fürstenberg · Stanley Goble · Winfield Scott Hancock · Francis Harvey · Edmund Herring · Joe Hewitt (RAAF officer) · Peter Heywood · Brian Horrocks · Cedric Howell · Hastings Ismay, 1st Baron Ismay · George Jones (RAAF officer) · Albert Kesselring · Bruce Kingsbury · Le Quang Tung · Helmut Lent · John Lerew · Murray Maxwell · James Whiteside McCay · George B. McClellan · Frank McNamara (VC) · Walter Model · Werner Mölders · Fred Moosally · Harry Murray · James Newland · Bill Newton · Walter Peeler · Alexander Pentland · Arthur Percival · Pham Ngoc Thao · Edwin Taylor Pollock · Lazare Ponticelli · Frederick Scherger · Uriel Sebree · William Tecumseh Sherman · Issy Smith · Myles Standish · Ronald Niel Stuart · Paul Nobuo Tatsuguchi · Thrasybulus · Benjamin Franklin Tilley · Ton That Dinh · Edgar Towner · Johann von Klenau · Ellis Wackett · John Lloyd Waddy · Blair Wark · Henry Wells (general) · John Whittle · Richard Williams (RAAF officer) · Abu Musab al-Zarqawi

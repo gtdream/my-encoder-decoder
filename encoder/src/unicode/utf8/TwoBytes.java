@@ -1,6 +1,6 @@
 package unicode.utf8;
 
-public class TwoByte {
+public class TwoBytes {
 	public final static int NUMBER_BYTE = 2;
 	public final static int NUMBER_PART = 1;
 	public final static int IDENTIFIER = 0xc0;
