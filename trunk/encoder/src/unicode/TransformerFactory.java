@@ -10,7 +10,7 @@ import unicode.utf16.UTF16BE;
 import unicode.utf16.UTF16LE;
 import unicode.utf8.UTF8;
 
-public class EncoderFactory {
+public class TransformerFactory {
 	
 	public final static int UTF8_MASK 	= 0xFFFFFF00;
 	public final static int UTF16_MASK 	= 0xFFFF0000;
@@ -22,7 +22,7 @@ public class EncoderFactory {
 	public final static int UTF32LE 	= 0xFFFE0000;
 	public final static int UTF32BE 	= 0x0000FEFF;
 	
-	public static Encoder getEncodingMethod(File file) throws IOException, EncoderNotSupportedException {
+	public static Transformer getEncodingMethod(File file) throws IOException, EncoderNotSupportedException {
 
 		BufferedInputStream bInputStream = null;
 		bInputStream = new BufferedInputStream(new FileInputStream(file));
@@ -50,17 +50,10 @@ public class EncoderFactory {
 		
 //		 System.out.printf("%x\n",byteOrderMark);
 		
-		if ((byteOrderMark & UTF32_MASK) == UTF32LE) {
 			
-			throw new EncoderNotSupportedException(EncodingType.UTF32LE.toString());
+		if ((byteOrderMark & UTF8_MASK) == UTF8) {
 			
-		} else if ((byteOrderMark & UTF32_MASK) == UTF32BE) {
-			
-			throw new EncoderNotSupportedException(EncodingType.UTF32LE.toString());
-			
-		} else if ((byteOrderMark & UTF8_MASK) == UTF8) {
-			
-			return new UTF8(bInputStream, EncodingType.UTF8BOM);
+			return new UTF8(bInputStream, TransformationType.UTF8BOM);
 			
 		} else if ((byteOrderMark & UTF16_MASK)>>>16 == UTF16LE) {
 			

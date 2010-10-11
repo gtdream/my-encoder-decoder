@@ -3,18 +3,18 @@ package unicode.utf16;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 
-import unicode.Encoder;
-import unicode.EncodingType;
+import unicode.Transformer;
+import unicode.TransformationType;
 
-public class UTF16BE extends Encoder{
+public class UTF16BE extends Transformer{
 	
 	public UTF16BE (BufferedInputStream bInputStream) {
-		super(EncodingType.UTF16BE);
+		super(TransformationType.UTF16BE);
 		this.bInputStream = bInputStream;
 	}
 
 	@Override
-	public String encode() throws IOException {
+	public String decode() throws IOException {
 		StringBuilder utf16Text = new StringBuilder();
 		return utf16Text.toString();
 	}

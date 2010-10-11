@@ -3,14 +3,14 @@ package unicode.utf8;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 
-import unicode.Encoder;
-import unicode.EncodingType;
+import unicode.Transformer;
+import unicode.TransformationType;
 
-public class UTF8 extends Encoder{
+public class UTF8 extends Transformer{
 
 	private final static int BUFFER_SIZE = 8192;
 	
-	public UTF8 (BufferedInputStream bInputStream, EncodingType encodingType) {
+	public UTF8 (BufferedInputStream bInputStream, TransformationType encodingType) {
 		
 		super(encodingType);
 		this.bInputStream = bInputStream;
@@ -19,14 +19,14 @@ public class UTF8 extends Encoder{
 	
 	public UTF8 (BufferedInputStream bInputStream) {
 		
-		super(EncodingType.UTF8);
+		super(TransformationType.UTF8);
 		this.bInputStream = bInputStream;
 		
 	}
 	 
 
 	@Override
-	public String encode () throws IOException {
+	public String decode () throws IOException {
 		StringBuilder utf8Text = new StringBuilder(BUFFER_SIZE);
 
 		// BufferedInputStream의 내부 buffer 와 같은 크기로 맞춤
@@ -34,6 +34,8 @@ public class UTF8 extends Encoder{
 		
 		int beforeShortageBytes = 0;
 		int incompletionData = 0;
+		
+//		BufferedInputStream bis = new BufferedInputStream(System.in);
 		
 		while (true) {
 			
@@ -94,10 +96,14 @@ public class UTF8 extends Encoder{
 			System.out.print(part);
 			
 			// 한번에 출력하기위해 모음
-			utf8Text.append(part);
+//			utf8Text.append(part);
+			
+//			bis.read();
 			
 		}
 
+//		bis.close();
+		
 		return utf8Text.toString();
 	}
 
