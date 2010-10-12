@@ -5,30 +5,39 @@ import java.io.BufferedOutputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
-import unicode.TransformationType;
-import unicode.Transformer;
 
-public class UTF8 extends Transformer{
+public class UTF8_legacy {
+
+	public final static int UTF8_MASK 	= 0xFFFFFF00;
+	public final static int UTF16_MASK 	= 0xFFFF0000;
+	public final static int UTF32_MASK 	= 0xFFFFFFFF;
 	
+	public final static int UTF8 		= 0xEFBBBF00;
+	public final static int UTF16LE 	= 0x0000FFFE;
+	public final static int UTF16BE		= 0x0000FEFF;
+	public final static int UTF32LE 	= 0xFFFE0000;
+	public final static int UTF32BE 	= 0x0000FEFF;
+	
+	int bufferSize = 8192;
 	BufferedOutputStream bOutputStream;
+	BufferedInputStream bInputStream;
 	
-	public UTF8 (BufferedInputStream bInputStream, TransformationType encodingType) {
+	public UTF8_legacy (BufferedInputStream bInputStream) {
 		
-		super(encodingType);
-		this.bInputStream = bInputStream;
+//		int byteOrderMark = 0;
 		
-		try {
-			bOutputStream = new BufferedOutputStream(new FileOutputStream("asd.txt"));
-			
-		} catch (IOException e) {
-			
-		}
+		// for (int i = 0; i < 4; i++) {
+		// byteOrderMark |= (buffer[i] << (Integer.SIZE - (Byte.SIZE * (i+1))))
+		// & (0xff000000 >>> (Byte.SIZE * i));
+		// }
 		
-	}
-	
-	public UTF8 (BufferedInputStream bInputStream) {
+//		byteOrderMark  = bom[0] << 24 & 0xff000000;
+//		byteOrderMark |= bom[1] << 16 & 0x00ff0000;
+//		byteOrderMark |= bom[2] << 8  & 0x0000ff00;
+//		byteOrderMark |= bom[3]       & 0x000000ff;
 		
-		super(TransformationType.UTF8);
+//		 System.out.printf("%x\n",byteOrderMark);
+		
 		this.bInputStream = bInputStream;
 		
 		try {
@@ -37,17 +46,6 @@ public class UTF8 extends Transformer{
 		} catch (IOException e) {
 			
 		}
-		
-	}
-	 
-	@Override
-	public String encode() throws IOException {
-		
-		StringBuilder utf8Text = new StringBuilder();
-		
-
-		
-		return utf8Text.toString();
 		
 	}
 	
@@ -70,7 +68,6 @@ public class UTF8 extends Transformer{
 		}
 	}
 
-	@Override
 	public String decode () throws IOException {
 		
 		StringBuilder unicodeText = new StringBuilder();
