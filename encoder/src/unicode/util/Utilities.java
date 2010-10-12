@@ -1,4 +1,4 @@
-package unicode;
+package unicode.util;
 
 import java.util.Iterator;
 import java.util.Properties;
@@ -23,7 +23,6 @@ public class Utilities {
 			if (Integer.SIZE-Byte.SIZE != i)
 				System.out.print(' ');
 		}
-		System.out.println();
 	}
 	
 	public static void printBinary (char value) {
@@ -34,7 +33,6 @@ public class Utilities {
 			if (Character.SIZE-Byte.SIZE != i)
 				System.out.print(' ');
 		}
-		System.out.println();
 	}
 	
 	public static void printBinary (byte value) {
@@ -45,7 +43,6 @@ public class Utilities {
 			if (Byte.SIZE-Byte.SIZE != i)
 				System.out.print(' ');
 		}
-		System.out.println();
 	}
 
 }
