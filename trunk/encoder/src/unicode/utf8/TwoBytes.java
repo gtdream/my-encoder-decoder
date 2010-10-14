@@ -6,4 +6,5 @@ public class TwoBytes {
 	public final static int IDENTIFIER = 0xc0;
 	public final static int MASK = 0xe0;
 	public final static int HEADER = 0xa0;
+	public final static int CHARACTER_SCOPE = 0x7ff;
 }

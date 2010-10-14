@@ -1,12 +1,12 @@
 package unicode;
 
-import unicode.exception.NotSupportedCharsetException;
+import unicode.exception.NotSupportedEncdoingException;
 import unicode.utf16.UTF16Encoder;
 import unicode.utf8.UTF8Encoder;
 
 public class EncoderFactory {
 
-	public static Encoder getEncoderFactory (String charset) throws NotSupportedCharsetException {
+	public static Encoder getEncoder (String charset) throws NotSupportedEncdoingException {
 
 		String charsetName = charset.toLowerCase();
 
@@ -29,7 +29,7 @@ public class EncoderFactory {
 
 		}
 
-		throw new NotSupportedCharsetException();
+		throw new NotSupportedEncdoingException();
 
 	}
 
