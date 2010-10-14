@@ -8,7 +8,7 @@ import unicode.Decoder;
 public class UTF8Decoder extends Decoder{
 	
 	@Override
-	public ArrayList<Integer> decode (byte[] source, int readedBytes) {
+	public ArrayList<Integer> decode (byte[] source) {
 		
 		ArrayList<Integer> unicode = new ArrayList<Integer>();
 		int count = 0;
@@ -31,7 +31,7 @@ public class UTF8Decoder extends Decoder{
 			}
 		}
 		
-		while (count < readedBytes) {
+		while (count < source.length) {
 
 			character = 0;
 			byte currentByte = source[count];
