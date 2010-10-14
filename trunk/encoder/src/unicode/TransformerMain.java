@@ -73,7 +73,7 @@ public class TransformerMain {
 			String text = new String(buffer, sourceCharset);
 			byte[] textBytes = text.getBytes("UTF-8");
 			Decoder decoder = new UTF8Decoder();
-			ArrayList<Integer> unicode = decoder.decode(textBytes, textBytes.length);
+			ArrayList<Integer> unicode = decoder.decode(textBytes);
 			
 			// 입력받은 목표 encoding 으로 적합한 Encoder object 를 생성한다
 			// 목표 encoding 을 지원하지 않는다면 예외발생
