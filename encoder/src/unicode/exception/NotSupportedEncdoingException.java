@@ -1,12 +1,12 @@
 package unicode.exception;
 
-public class NotSupportedCharsetException extends Exception {
+public class NotSupportedEncdoingException extends Exception {
 
-	public NotSupportedCharsetException () {
+	public NotSupportedEncdoingException () {
 		System.out.println("encoder not supported");
 	}
 	
-	public NotSupportedCharsetException (String message) {
+	public NotSupportedEncdoingException (String message) {
 		System.out.println(message + " encoder not supported");
 	}
 	

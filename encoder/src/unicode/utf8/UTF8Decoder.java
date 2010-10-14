@@ -14,19 +14,20 @@ public class UTF8Decoder extends Decoder{
 		int count = 0;
 		int character = 0;
 		
-		// BOM 제거, 있을 경우에만		
-		if (source.length > 3) {
+		// source 가 3byte 이상이라면 BOM 검사
+		if (source.length > 2) {
 			
 			int bom = 0;
 			
-			bom  = (source[0]<<16)	& 0x00ff0000;
-			bom |= (source[1]<<8)	& 0x0000ff00;
-			bom |= (source[2])		& 0x000000ff;
+			bom  = (source[0]<<16)	& 0x00ff0000; // 3번째 byte masking
+			bom |= (source[1]<<8)	& 0x0000ff00; // 2번재 byte masking
+			bom |= (source[2])		& 0x000000ff; // 1번째 byte masking
 			
+			// 최선두 3byte 가 UTF-8 bom 이라면
+			// 유효한 data 부터 decoding 되도록
+			// 시작 index 증가
 			if (bom == ByteOrderMark.UTF8) {
-				
 				count = 3;
-				
 			}
 		}
 		

@@ -37,24 +37,30 @@ public class UTF16Encoder extends Encoder{
 				
 				int character = source.get(i);
 								
+				// 16bit 영역을 넘지않는 UNICODE character 는 
+				// 16bit 위로 전부 0
+				// 한문자에 2byte 사용
 				if ((character >> 16) == 0) {
 					
 					dest[count++] = (byte)(character>>8);
 					dest[count++] = (byte)character;
 				
+				// 16bit 위로 1인 bit 가 있으면
+				// 한문자에 4byte 사용
 				} else {
-					
 					
 					byte[] fourByte = new byte[4];
 					
-					// unicode form
+					// UNICODE form
 					// 00000000 000ZZZZZ xxxxxxxyy yyyyyyyy
+					
+					// UTF-16 form
+					// hi surrogate 110110zz zzxxxxxx
+					// low surrogate 110111yy yyyyyyyy
+					// zzzz = ZZZZZ - 1	
 					
 					// hi surrogate
 					// 110110zz zzxxxxxx
-					
-					// zzzz = ZZZZZ - 1
-
 					char hi = (char) ((character>>10) & 0x3f);	// xxxxxx 6bit 채움
 					hi += ((((character >> 16) & 0x1f)-1) << 6);	// zzzz 4bit 채움
 					hi += HI_SURRO; // surrogate bit 추가
@@ -68,7 +74,7 @@ public class UTF16Encoder extends Encoder{
 					fourByte[2] = (byte) (low>>8); // 앞쪽 110111yy
 					fourByte[3] = (byte) low; // 뒷쪽 yyyyyyyy
 					
-					// 4byte utf-16 문자 data 를 1byte 씩   
+					// 4byte UTF-16 character data 를 1byte 씩 담음   
 					for (byte b : fourByte) {
 						dest[count++] = b;
 					}

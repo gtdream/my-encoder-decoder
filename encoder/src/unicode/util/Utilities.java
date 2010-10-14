@@ -1,10 +1,52 @@
 package unicode.util;
 
+import java.io.File;
 import java.util.Iterator;
 import java.util.Properties;
 import java.util.Set;
 
 public class Utilities {
+	
+	public static File generateFilePathAndName (String destFileName) {
+		
+		int numberPadding = 1;
+		File destFile = new File(destFileName);
+		String finalFileName = destFile.getPath();
+		
+		// 목표 file 과 같은 이름의 file 의 존재 여부를 확인한다
+		// 같은 이름이 있을 때마다 'x' 를 늘려가며 재확인한다
+		while (true) {
+			
+			if (!destFile.exists()) {
+				
+				break;
+				
+			} else {
+
+				StringBuilder extraName = new StringBuilder();
+				finalFileName = destFileName.substring(0, destFileName.lastIndexOf('.')) + "_";
+				extraName.append(finalFileName);
+				
+				for (int i = 0; i < numberPadding; i++) {
+					extraName.append('x');
+				}
+				
+				extraName.append(".txt");
+				
+				destFile = new File(extraName.toString());
+
+				finalFileName = extraName.toString();
+				
+				numberPadding++;
+				
+			}
+			
+		}
+		
+		return new File(finalFileName);
+		
+	}
+	
 	public static void printSystemInfo () {
 		Properties p = System.getProperties();
 		Set<Object> keys = p.keySet();
@@ -44,5 +86,5 @@ public class Utilities {
 				System.out.print(' ');
 		}
 	}
-
+	
 }

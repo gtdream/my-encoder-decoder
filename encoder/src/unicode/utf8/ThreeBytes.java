@@ -6,4 +6,5 @@ public class ThreeBytes {
 	public final static int IDENTIFIER = 0xe0;
 	public final static int MASK = 0xf0;
 	public final static int HEADER = 0xe0;
+	public final static int CHARACTER_SCOPE = 0xffff;
 }
