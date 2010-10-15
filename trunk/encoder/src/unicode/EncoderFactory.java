@@ -12,7 +12,7 @@ public class EncoderFactory {
 
 		if (charsetName.compareTo("utf-8") == 0) {
 
-			return new UTF8Encoder();
+			return new UTF8Encoder(ByteOrderMark.EMPTY);
 
 		} else if (charsetName.compareTo("utf-8bom") == 0) {
 

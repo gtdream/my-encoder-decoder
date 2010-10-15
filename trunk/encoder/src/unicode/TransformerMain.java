@@ -15,6 +15,8 @@ import unicode.util.Utilities;
 
 public class TransformerMain {
 
+	public static final int MAX_BYTE_SIZE = 4;
+	
 	public static void main (String[] args) {
 		
 		if (args.length < 3) {
@@ -46,8 +48,8 @@ public class TransformerMain {
 		try {
 			
 			bInputStream = new BufferedInputStream(new FileInputStream(sourceFile));
-			long fileSize = sourceFile.length();
-			byte[] buffer = new byte[(int) fileSize];
+			long remainBytes = sourceFile.length();
+			byte[] buffer = new byte[(int) remainBytes];
 			int readedBytes = 0;
 			
 			
@@ -57,13 +59,13 @@ public class TransformerMain {
 			// 읽어 들인 byte 가 0이거나 파일끝(-1)에 도달하면 종료 
 			while (true) {
 
-				readedBytes = bInputStream.read(buffer, readedBytes, (int) fileSize);
+				readedBytes = bInputStream.read(buffer, readedBytes, (int) remainBytes);
 
 				if (0 >= readedBytes) {
 					break;
 				}
 				
-				fileSize -= readedBytes;
+				remainBytes -= readedBytes;
 				
 			}
 			
@@ -87,7 +89,7 @@ public class TransformerMain {
 			
 			// 최종 결과를 담을 영역
 			// byte order mark 를 위해 4byte 추가
-			byte[] finalByteData = new byte[unicode.size() * 4 + 4];
+			byte[] finalByteData = new byte[unicode.size() * MAX_BYTE_SIZE + 4];
 			
 			// encoding 시작
 			// UNICODE code value, 변환된 data 를 저장할 buffer 공간
